@@ -2,6 +2,11 @@
 
 # Project plan
 
+## Seriveners
+
+* [Caleb Wiyninger](https://github.com/crw405)
+* [Samantha Morales](https://github.com/TxtrisSammi)
+
 ## Project idea
 
 Spotify song manager.
