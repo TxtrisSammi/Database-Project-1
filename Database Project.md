@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD033 -->
+
 # Project plan
 
 ## Project idea
@@ -29,19 +31,20 @@ User connects and the program gets the users liked songs (or another playlist) a
 | -------------------------- | ---------------------------- | -------------------- |
 | Meaning                    | Spotify ID of the user       | Username of the user |
 | Domain<br>Definition       | Char: Size 22<br>Primary Key | Char: Size 100       |
+
 ### Track
 
 | Attribute<br>/ Domain name | Trackid                      | TrackName         | Album             |
 | -------------------------- | ---------------------------- | ----------------- | ----------------- |
 | Meaning<br>                | Spotify ID of a the track    | Name of the track | Name of the album |
 | Domain<br>Definition       | Char: Size 22<br>Primary Key | Char: Size 100    | Char: Size 100    |
+
 ### Artist
 
 | Attribute<br>/ Domain name | ArtistId                     | ArtistName         |
 | -------------------------- | ---------------------------- | ------------------ |
 | Meaning                    | Spotify ID of the artist     | Name of the artist |
 | Domain<br>Definition       | Char: Size 22<br>Primary Key | Char: Size 100     |
-
 
 ### TrackArtist
 
@@ -53,9 +56,10 @@ User connects and the program gets the users liked songs (or another playlist) a
 ### Playlist
 
 | Attribute<br>/ Domain name | PlaylistId                     | PlaylistName         | PlaylistDescription         | UserId                       |
-| -------------------------- | ------------------------------ | -------------------- | --------------------------- | ---------------------------- |
+| -------------------------- | ------------------------------ | -------------------- --------------------------- | ---------------------------- |
 | Meaning<br>                | Spotify ID of the playlist<br> | Name of the playlist | Description of the playlist | Spotify ID of the user<br>   |
 | Domain<br>Definition       | Char: Size 22<br>Primary key   | Char: Size 22<br>    | Char: Size 100              | Char: Size 22<br>Foreign Key |
+
 ### PlaylistTrack
 
 | Attribute<br>/ Domain name | TrackId                                       | PlaylistId                                    |
@@ -64,4 +68,5 @@ User connects and the program gets the users liked songs (or another playlist) a
 | Domain<br>Definition       | Char: Size 22<br>Composite Key<br>Foreign Key | Char: Size 22<br>Composite Key<br>Foreign Key |
 
 ## Data source
+
 User, Spotify API
