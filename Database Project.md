@@ -17,16 +17,21 @@ User connects and the program gets the users liked songs (or another playlist) a
 
 ## Developing environment
 
-* OS:  
-  * Windows 11  
-  * Linux  
-* IDE:  
-  * VSCode  
-* Database:  
-  * MySQL / MariaDB  
-  * MySQL Workbench  
-* Language:  
-  * Java
+* OS:
+  * Windows 11
+  * Linux
+* IDE:
+  * VSCode
+* Database:
+  * MySQL / MariaDB
+  * MySQL Workbench
+* Language:
+  * Backend:
+    * Java
+  * Frontend:
+    * HTML
+    * CSS
+    * JS
 
 ## Initial design
 
