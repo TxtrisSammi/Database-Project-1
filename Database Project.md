@@ -2,7 +2,7 @@
 
 # Project plan
 
-## Scriveners
+## [Scriveners](https://www.oed.com/dictionary/scrivener_n)
 
 * [Caleb Wiyninger](https://github.com/crw405)
 * [Samantha Morales](https://github.com/TxtrisSammi)
