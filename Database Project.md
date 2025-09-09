@@ -2,7 +2,7 @@
 
 # Project plan
 
-## Seriveners
+## Scriveners
 
 * [Caleb Wiyninger](https://github.com/crw405)
 * [Samantha Morales](https://github.com/TxtrisSammi)
