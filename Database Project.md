@@ -61,7 +61,7 @@ User connects and the program gets the users liked songs (or another playlist) a
 ### Playlist
 
 | Attribute<br>/ Domain name | PlaylistId                     | PlaylistName         | PlaylistDescription         | UserId                       |
-| -------------------------- | ------------------------------ | -------------------- --------------------------- | ---------------------------- |
+| -------------------------- | ------------------------------ | -------------------- | --------------------------- | ---------------------------- |
 | Meaning<br>                | Spotify ID of the playlist<br> | Name of the playlist | Description of the playlist | Spotify ID of the user<br>   |
 | Domain<br>Definition       | Char: Size 22<br>Primary key   | Char: Size 22<br>    | Char: Size 100              | Char: Size 22<br>Foreign Key |
 
