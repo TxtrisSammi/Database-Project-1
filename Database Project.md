@@ -56,6 +56,13 @@ User connects and the program gets the users liked songs (or another playlist) a
 | Meaning                    | Spotify ID of the artist     | Name of the artist |
 | Domain<br>Definition       | Char: Size 22<br>Primary Key | Char: Size 100     |
 
+### ArtistGenre
+
+| Attribute<br>/ Domain name | ArtistId                                      | ArtistGenre                     |
+| -------------------------- | --------------------------------------------- | ------------------------------- |
+| Meaning                    | Spotify ID of the artist                      | Name of the genre               |
+| Domain<br>Definition       | Char: Size 22<br>Composite Key<br>Foreign Key | Char: Size 100<br>Composite Key |
+
 ### TrackArtist
 
 | Attribute<br>/ Domain name | Trackid                                       | ArtistId                                      |
