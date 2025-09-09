@@ -4,15 +4,15 @@ Spotify song manager.
 ## Description
 User connects and the program gets the users liked songs (or another playlist) and converts the JSON into SQL which can be queried in order to sort the songs into different playlists. 
 ## Developing environment
-OS:
-	Windows 11
-	Linux
-IDE:
-	VSCode
-Database:
-	MySQL / MariaDB
-	MySQL Workbench
-Language:
+OS:   
+	Windows 11  
+	Linux  
+IDE:   
+	VSCode  
+Database:  
+	MySQL / MariaDB  
+	MySQL Workbench  
+Language:   
 	Java
 ## Initial design
 ### User
