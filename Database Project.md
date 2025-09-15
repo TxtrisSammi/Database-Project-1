@@ -27,7 +27,7 @@ User connects and the program gets the users liked songs (or another playlist) a
   * MySQL Workbench
 * Language:
   * Backend:
-    * Java
+    * Node.js
   * Frontend:
     * HTML
     * CSS
