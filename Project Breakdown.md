@@ -67,37 +67,37 @@
 
 ## Queries
 
-SELECT *FROM User WHERE UserId = id; -- get user info
-SELECT TrackID FROM PlaylistTrack WHERE PlaylistId = id; -- get all songs from playlist
-SELECT PlaylistId FROM Playlist WHERE UserId = id; -- get all playlist that user has
-SELECT* FROM Track WHERE TrackId = id; -- get all track info for a track
-SELECT * FROM Artist WHERE ArtistId = id; -- get all artists for a track
-SELECT ArtistGenre FROM ArtistGenre WHERE ArtistId = id; -- get all genres for an artist
+- SELECT *FROM User WHERE UserId = id; -- get user info
+- SELECT TrackID FROM PlaylistTrack WHERE PlaylistId = id; -- get all songs from playlist
+- SELECT PlaylistId FROM Playlist WHERE UserId = id; -- get all playlist that user has
+- SELECT* FROM Track WHERE TrackId = id; -- get all track info for a track
+- SELECT * FROM Artist WHERE ArtistId = id; -- get all artists for a track
+- SELECT ArtistGenre FROM ArtistGenre WHERE ArtistId = id; -- get all genres for an artist
 
 ## Actions
 
 ### User
 
-INSERT INTO User id, name; -- insert when new user
+- INSERT INTO User id, name; -- insert when new user
 
 ### Track
 
-INSERT INTO Track id, name, album; -- insert when new track
-INSERT INTO TrackArtist track_id, artist_id; -- insert when new track
+- INSERT INTO Track id, name, album; -- insert when new track
+- INSERT INTO TrackArtist track_id, artist_id; -- insert when new track
 
 ### Artist
 
-INSERT INTO Artist id, name; -- insert when new Artist
-INSERT INTO ArtistGenre id, genre; -- insert when new Artist
+- INSERT INTO Artist id, name; -- insert when new Artist
+- INSERT INTO ArtistGenre id, genre; -- insert when new Artist
 
 ### Playlist
 
-INSERT INTO Playlist id, name, desc, user_id; -- insert when new playlist
-INSERT INTO PlaylistTrack track_id, playlist_id; -- insert when new playlist
+- INSERT INTO Playlist id, name, desc, user_id; -- insert when new playlist
+- INSERT INTO PlaylistTrack track_id, playlist_id; -- insert when new playlist
 
 ### Genre
 
-INSERT INTO ArtistGenre id, genre; -- when editing artist genres
-DELETE FROM ArtistGenre WHERE ArtistId = id, ArtistGenre = genre; -- when editing artist genres
-INSERT INTO TrackGenre id, genre; -- when editing track genres
-DELETE FROM TrackGenre WHERE ArtistId = id, ArtistGenre = genre; -- when editing track genres
+- INSERT INTO ArtistGenre id, genre; -- when editing artist genres
+- DELETE FROM ArtistGenre WHERE ArtistId = id, ArtistGenre = genre; -- when editing artist genres
+- INSERT INTO TrackGenre id, genre; -- when editing track genres
+- DELETE FROM TrackGenre WHERE ArtistId = id, ArtistGenre = genre; -- when editing track genres
