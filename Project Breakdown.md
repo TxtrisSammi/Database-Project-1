@@ -22,7 +22,7 @@
 
 ### Week 3
 
-- Setting uo an node/express app
+- Setting up a node/express app
 - setting up db
 
 ### Week 4 - 5
@@ -30,7 +30,7 @@
 - set up front end:
   - created all pages/routes
   - styling
-  - ui
+  - UI
 - Setting up api calls:
   - Auth
   - Get user
