@@ -30,7 +30,7 @@
 - set up front end:
   - created all pages/routes
   - styling
-  - UI
+  - ui
 - Setting up api calls:
   - Auth
   - Get user
