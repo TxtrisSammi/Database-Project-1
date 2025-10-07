@@ -24,7 +24,7 @@ Week 1 - 5 | 08/26 - 9/25
 
 ### Week 8 | 10/14 - 10/16
 
-- Setting uo an node/express app
+- Setting up a node/express app
 - setting up db
 
 ### Week 9 - 10 | 10/21 - 10/30
