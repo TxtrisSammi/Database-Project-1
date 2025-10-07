@@ -15,17 +15,19 @@
 
 ## Tasks
 
-### Week 1 - 2
+Week 1 - 5 | 08/26 - 9/25
+
+### Week 6 - 7 | 9/30 - 10/09
 
 - Learn Node.js, Express, CSS
 - Learn MySQL
 
-### Week 3
+### Week 8 | 10/14 - 10/16
 
 - Setting uo an node/express app
 - setting up db
 
-### Week 4 - 5
+### Week 9 - 10 | 10/21 - 10/30
 
 - set up front end:
   - created all pages/routes
@@ -37,7 +39,7 @@
   - Get playlists
   - Get tracks
 
-### Week 6 - 7
+### Week 11 - 12 | 11/04 - 11/13
 
 - Setting db actions/queries:
   - adding user
@@ -47,23 +49,23 @@
   - adding genres
   - editing genres
 
-### Week 8
+### Week 13 | 11/18 - 1/20
 
 - Sorting:
   - By artists
   - By genres
 - Stats
 
-### Week 9
+### Week 14 | 11/25 - 11/27
 
 - UI functionality:
   - displaying info
   - buttons function
 
-### Week 10
+### Week 15 | 12/02 - 12/04
 
 - Finalization
-- Presentation preperation
+- Presentation preparation
 
 ## Queries
 
