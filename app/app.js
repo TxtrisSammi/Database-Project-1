@@ -15,6 +15,9 @@ app.use(express.static(path.join(__dirname, 'public'))); // pass public
 
 
 // app stuff goes here
+app.get('/', (req,res) => {
+    res.render("index.ejs")
+})
 
 app.listen(port, function() {
     console.log("App running on port: " + port);
