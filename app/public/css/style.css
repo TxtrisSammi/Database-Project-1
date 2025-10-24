@@ -9,6 +9,12 @@ html {
   height: 100%;
 }
 
+nav {
+  background-color: #3a3232;
+  display: flex;
+  justify-content: space-between;
+}
+
 body {
   font-family: "sans-serif";
   background-color: var(--bg);
