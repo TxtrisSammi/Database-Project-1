@@ -69,10 +69,10 @@ Week 1 - 5 | 08/26 - 9/25
 
 ## Queries
 
-- SELECT *FROM User WHERE UserId = id; -- get user info
+- SELECT * FROM User WHERE UserId = id; -- get user info
 - SELECT TrackID FROM PlaylistTrack WHERE PlaylistId = id; -- get all songs from playlist
 - SELECT PlaylistId FROM Playlist WHERE UserId = id; -- get all playlist that user has
-- SELECT* FROM Track WHERE TrackId = id; -- get all track info for a track
+- SELECT * FROM Track WHERE TrackId = id; -- get all track info for a track
 - SELECT * FROM Artist WHERE ArtistId = id; -- get all artists for a track
 - SELECT ArtistGenre FROM ArtistGenre WHERE ArtistId = id; -- get all genres for an artist
 
