@@ -1,0 +1,39 @@
+:root {
+  --text: #FFFFFF;
+  --bg: #191414;
+  --active: #1ED760;
+  --inactive: #1DB954;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: "sans-serif";
+  background-color: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100%;
+  justify-content:center;
+  align-items:center;
+}
+
+#prompt {
+  border:5px solid var(--active);
+  border-radius:10px;
+  text-align: center;
+  padding: 2rem;
+}
+
+#prompt button{
+  border: none;
+  color: var(--text);
+  border-radius: 50px;
+  padding: 1rem;
+  background-color: var(--inactive);
+}
+
+#prompt button:hover {
+  background-color: var(--active);
+}

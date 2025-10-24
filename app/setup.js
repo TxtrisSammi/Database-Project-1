@@ -7,7 +7,8 @@ let con = mysql.createConnection({
   host: process.env.HOST,
   user: process.env.USER,
   password: process.env.PASS,
-  database: process.env.DB
+  database: process.env.DB,
+  multipleStatements:true
 });
 
 
@@ -28,11 +29,10 @@ con.connect(function (err) {
   console.log("connected");
 
   // drop all for sake of debugging
-  dropAll(con, tables)
-
+  //dropAll(con, tables)
 
   // create tables
-  createAll(con, tables)
+  //createAll(con)
 
   // etc
   selectAll(con, tables)
@@ -41,23 +41,22 @@ con.connect(function (err) {
 function createAll(con) {
   let createUser = `
     create table User
-    (userId varchar(30) primary key, username varchar(50))
+    (userId varchar(30) primary key, username varchar(50));
     `
 
   let createTrack = `
     create table Track (
         Trackid char(30) primary key,
-        
         TrackName char(100),
         Album char(100)
-    )
+    );
     `
 
   let createArtist = `
     create table Artist (
         ArtistId char(30) primary key,
         ArtistName char(100)
-    )
+    );
     `
 
   let createArtistGenre = `
@@ -67,7 +66,7 @@ function createAll(con) {
         primary key (TrackId, TrackGenre),
         foreign key (TrackId) references Track(Trackid)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createTrackGenre = `
@@ -77,7 +76,7 @@ function createAll(con) {
         primary key (ArtistId, ArtistGenre),
         foreign key (ArtistId) references Artist(ArtistId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createTrackArtist = `
@@ -89,7 +88,7 @@ function createAll(con) {
             on update cascade on delete cascade,
         foreign key (ArtistId) references Artist(ArtistId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createPlaylist = `
@@ -100,7 +99,7 @@ function createAll(con) {
         UserId char(30),
         foreign key (UserId) references User(userId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createPlaylistTrack = `
@@ -112,7 +111,7 @@ function createAll(con) {
             on update cascade on delete cascade,
         foreign key (PlaylistId) references Playlist(PlaylistId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let queries = [
@@ -126,11 +125,10 @@ function createAll(con) {
     createPlaylistTrack
   ]
 
-  let createAll
+  let createAll = ""
 
   for (const query of queries) {
-    createAll += "\n"
-    createAll += query
+    createAll += " " + query
   }
 
   con.query(createAll, (err) => {
