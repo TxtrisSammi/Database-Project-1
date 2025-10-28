@@ -3,6 +3,7 @@ require("dotenv").config(); // allow reading from .env
 const express = require('express');
 const mysql = require('mysql');
 const path = require('path');
+const router = require('./router')
 
 // create app
 const app = express();
@@ -18,6 +19,11 @@ app.use(express.static(path.join(__dirname, 'public'))); // pass public
 app.get('/', (req,res) => {
     res.render("index.ejs")
 })
+
+
+// routing stuff 
+app.use('/', router);
+
 
 app.listen(port, function() {
     console.log("App running on port: " + port);
