@@ -38,29 +38,21 @@ app.get("/callback", async (req, res) => {
 
   // send the request and wait for it to return
   const tokenResponse = await fetch("https://accounts.spotify.com/api/token", authOptions);
+
   // read the token as json
   const tokenData = await tokenResponse.json();
+
   // extract token
   const accessToken = tokenData.access_token;
 
   // use token to get user data
-  const userData = await getProfile(accessToken);
+  // const userData = await getProfile(accessToken);
 
-  // TODO: redirect to the user page
-  res.send({ user: userData });
+  // res.send({ user: userData });
+
+  // store token in session
+  req.session.authToken = accessToken
+  res.redirect("/user")
 });
-
-async function getProfile(accessToken) {
-  // send user data request with token
-  const response = await fetch("https://api.spotify.com/v1/me", {
-    headers: {
-      Authorization: "Bearer " + accessToken
-    }
-  })
-
-  // wait for it to come in and return it from the function
-  const data = await response.json()
-  return data
-}
 
 module.exports = app

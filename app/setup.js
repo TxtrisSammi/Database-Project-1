@@ -8,7 +8,7 @@ let con = mysql.createConnection({
   user: process.env.USER,
   password: process.env.PASS,
   database: process.env.DB,
-  multipleStatements:true
+  multipleStatements: true
 });
 
 
@@ -29,13 +29,13 @@ con.connect(function (err) {
   console.log("connected");
 
   // drop all for sake of debugging
-  //dropAll(con, tables)
+  // dropAll(con, tables)
 
   // create tables
-  //createAll(con)
+  // createAll(con)
 
   // etc
-  selectAll(con, tables)
+  // selectAll(con, tables)
 })
 
 function createAll(con) {

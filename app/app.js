@@ -1,8 +1,8 @@
 // imports
 require("dotenv").config(); // allow reading from .env
 const express = require('express');
-const mysql = require('mysql');
 const path = require('path');
+const session = require("express-session")
 
 // create app
 const app = express();
@@ -13,12 +13,27 @@ app.set('view engine', 'ejs'); // set view engine
 app.set('views', path.join(__dirname, 'views')); // pass views
 app.use(express.static(path.join(__dirname, 'public'))); // pass public
 
+// session setup
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+}))
 
-// app stuff goes here
-app.get('/', (req,res) => {
-    res.render("index.ejs")
+// import routes
+const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/user");
+
+// landing page
+app.get('/', (req, res) => {
+  res.render("index.ejs")
 })
 
-app.listen(port, function() {
-    console.log("App running on port: " + port);
+// import routes
+app.use("/", authRoutes)
+app.use("/", userRoutes)
+
+// listen for connections
+app.listen(port, function () {
+  console.log("App running on port: " + port);
 })
