@@ -3,7 +3,6 @@ require("dotenv").config(); // allow reading from .env
 const express = require('express');
 const path = require('path');
 const session = require("express-session")
-const router = require('./router')
 
 // create app
 const app = express();
@@ -29,11 +28,6 @@ const userRoutes = require("./routes/user");
 app.get('/', (req, res) => {
   res.render("index.ejs")
 })
-
-
-// routing stuff 
-app.use('/', router);
-
 
 // import routes
 app.use("/", authRoutes)
