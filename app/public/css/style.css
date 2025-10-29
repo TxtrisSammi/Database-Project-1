@@ -7,18 +7,43 @@
   --active: #1ED760;
   --inactive: #1DB954;
   --accent: #D71E95;
+  --border-radius: 10px;
 }
 
 * {
   font-family: sans-serif;
+  color: var(--text)
 }
 
 html, body, main {
   height: 100%;
 }
 
+main {
+  margin: 3rem;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.window {
+  border: 5px solid var(--active);
+  background-color: var(--bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+}
+
+.flex {
+  display: flex;
+}
+
 /* Header */
 /* Nav */
+
+header {
+  border-bottom: 5px solid var(--active);
+  border-radius: var(--border-radius);
+}
+
 nav {
   display: flex;
   flex-wrap: nowrap;
@@ -50,6 +75,19 @@ nav a:hover {
 }
 
 /* Footer */
+
+/* Button */
+.big-button {
+  border: none;
+  color: var(--text);
+  border-radius: 50px;
+  padding: 1rem;
+  background-color: var(--inactive);
+}
+
+.big-button:hover {
+  background-color: var(--active);
+}
 
 /* Animation */
 

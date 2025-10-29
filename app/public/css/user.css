@@ -1,0 +1,32 @@
+#profile img {
+    border-radius: 100%;
+    border: 5px solid var(--inactive);
+    background-color: var(--bg);
+    justify-content: space-between;
+    margin-right: 1rem;
+}
+
+#user-info {
+    flex-direction: column;
+}
+
+#user-info h1 {
+    align-self: flex-start;
+    font-size: 5rem;
+    padding: 0;
+    margin: 0;
+}
+
+#account-type {
+    font-size: 1rem;
+    color: var(--text);
+    border-radius: 50px;
+    padding: 5px;
+    background-color: var(--inactive);
+    width: fit-content;
+}
+
+#account-type.lava {
+  border: 2px solid var(--active);
+  animation-duration: 5s;
+}

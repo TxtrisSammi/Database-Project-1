@@ -7,20 +7,23 @@ app.get("/user", async (req, res) => {
   let token = req.session.authToken
 
   if (token) {
-    let data = await getProfile(token)
-    // display_name
-    // external_urls: spotify
-    // images: 0: url // large image
-    //         1: url // small
-    // product
+    let user = await getProfile(token)
+    let playlists = await getPlaylists(token)
 
-    res.render("user.ejs", { data: data })
+    console.log(playlists)
+
+    for (const playlist of playlists.items) {
+      console.log(playlist.name)
+    }
+
+    res.render("user.ejs", { user: user, playlists: playlists })
     // res.send(data)
   } else {
     res.redirect("/auth")
   }
 
 })
+
 
 async function getProfile(accessToken) {
   // send user data request with token
@@ -31,6 +34,17 @@ async function getProfile(accessToken) {
   })
 
   // wait for it to come in and return it from the function
+  const data = await response.json()
+  return data
+}
+
+async function getPlaylists(accessToken) {
+  const response = await fetch("https://api.spotify.com/v1/me/playlists", {
+    headers: {
+      Authorization: "Bearer " + accessToken
+    }
+  })
+
   const data = await response.json()
   return data
 }

@@ -55,4 +55,8 @@ app.get("/callback", async (req, res) => {
   res.redirect("/user")
 });
 
+app.get("/auth", (req, res) => {
+  res.redirect("/login")
+})
+
 module.exports = app
