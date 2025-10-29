@@ -29,14 +29,13 @@ con.connect(function (err) {
   console.log("connected");
 
   // drop all for sake of debugging
-  dropAll(con, tables)
-
+  // dropAll(con, tables)
 
   // create tables
-  createAll(con, tables)
+  // createAll(con)
 
   // etc
-  selectAll(con, tables)
+  // selectAll(con, tables)
 })
 
 function createAll(con) {

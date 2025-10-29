@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="" href="css/style.css">
+    <title>Home</title>
+</head>
+<body>
+    <%- include("./components/header") %>
+
+    <main>
+        <img src="<%= data.images[0].url %>" alt="Profile">
+        <h1> 
+            <%=data.display_name%>
+        </h1>
+        <% if (data.product = "premium") { %>
+            <span class="premium-tag">Premium</span>
+        <% } else { %>
+            <span class="tag">Normal</span>
+        <% } %>
+    </main>
+
+    <%- include("./components/footer") %>
+</body>
+</html>
