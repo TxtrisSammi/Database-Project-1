@@ -1,5 +1,4 @@
-const { stringify } = require("querystring");
-const express = require("express")
+const { stringify } = require("querystring"); const express = require("express")
 const app = express.Router()
 
 app.get("/user", async (req, res) => {
@@ -12,10 +11,6 @@ app.get("/user", async (req, res) => {
 
     console.log(playlists)
 
-    for (const playlist of playlists.items) {
-      console.log(playlist.name)
-    }
-
     res.render("user.ejs", { user: user, playlists: playlists })
     // res.send(data)
   } else {
@@ -23,7 +18,6 @@ app.get("/user", async (req, res) => {
   }
 
 })
-
 
 async function getProfile(accessToken) {
   // send user data request with token
@@ -39,14 +33,19 @@ async function getProfile(accessToken) {
 }
 
 async function getPlaylists(accessToken) {
-  const response = await fetch("https://api.spotify.com/v1/me/playlists", {
-    headers: {
-      Authorization: "Bearer " + accessToken
-    }
-  })
-
-  const data = await response.json()
-  return data
+  let playlists = []
+  let url = "https://api.spotify.com/v1/me/playlists"
+  while (url) {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: "Bearer " + accessToken
+      }
+    })
+    const data = await response.json()
+    playlists = playlists.concat(data.items);
+    url = data.next
+  }
+  return playlists
 }
 
 module.exports = app

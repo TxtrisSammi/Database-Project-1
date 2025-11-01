@@ -15,12 +15,12 @@
     <main class="flex">
 
       <div class="window flex" id="profile">
-        <img width=" 200px" src="<%= user.images[0].url %>" alt="Profile">
+        <img width="200px" src="<%= user.images[0].url %>" alt="Profile">
         <div class="flex" id="user-info">
           <h1>
             <%=user.display_name%>
           </h1>
-          <% if (user.product="premium" ) { %>
+          <% if (user.product==="premium" ) { %>
             <span id="account-type" class="lava">Premium</span>
             <% } else { %>
               <span id="account-type">Normal</span>
@@ -28,14 +28,35 @@
         </div>
       </div>
 
-        <div class="flex window" id="stats">
-            <h2>Stats go here</h2>
-        </div>
+      <div class="flex window" id="stats">
+        <h2>Stats go here</h2>
+      </div>
 
-        <div class="window flex" id="playlists">
-            <h2>Playlists go here</h2>
-            <%= playlists %>
-        </div>
+      <div class="window" id="playlists">
+        <ul class="listing-list flex">
+          <% for (const playlist of playlists) { %>
+            <li>
+              <a href="/playlists/<%= playlist.id %>">
+                <div class="listing flex">
+                  <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
+                    <img width="200px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
+                    <% } else { %>
+                      <img width="200px" src="/media/missing.jpg" alt=":(">
+                      <% } %>
+                        <div>
+                          <h3>
+                            <%= playlist.name %>
+                          </h3>
+                          <p>
+                            <%= playlist.description %>
+                          </p>
+                        </div>
+                </div>
+              </a>
+            </li>
+            <% } %>
+        </ul>
+      </div>
 
     </main>
 

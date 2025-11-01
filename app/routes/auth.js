@@ -6,7 +6,7 @@ const app = express.Router()
 // this runs when user clicks sign in with spotify and redirects them to the spotify authorization page
 app.get("/login", (req, res) => {
   // set scope of what our app can do
-  const scope = ["user-read-private", "user-read-email"]
+  const scope = ["user-read-private", "user-read-email", "playlist-read-private", "playlist-read-collaborative"]
   // send user to auth page with our app credentials
   res.redirect("https://accounts.spotify.com/authorize?" + stringify({
     response_type: "code",

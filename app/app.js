@@ -23,6 +23,7 @@ app.use(session({
 // import routes
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
+const playRoutes = require("./routes/playlists")
 
 // landing page
 app.get('/', (req, res) => {
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 // import routes
 app.use("/", authRoutes)
 app.use("/", userRoutes)
+app.use("/", playRoutes)
 
 // listen for connections
 app.listen(port, function () {

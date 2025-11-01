@@ -69,7 +69,6 @@ nav a:hover {
   gap: 10%;
   font-family: inherit;
 }
-
 .navlinks a {
   white-space: nowrap;
 }
@@ -89,9 +88,46 @@ nav a:hover {
   background-color: var(--active);
 }
 
+/* Listing (playlists, tracks, etc) */ 
+.listing-list {
+  list-style-type: none;id
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.listing-list a {
+  text-decoration: none;
+}
+
+.listing {
+  height: 200px;
+  overflow: hidden;
+}
+
+.listing img {
+  margin-right: 1rem;
+}
+
+.listing h3 {
+  font-size: 2.5rem;
+}
+
 /* Animation */
 
 .lava {
+  background: linear-gradient(315deg, var(--accent), var(--bg));
+  background-size: 400% 400%;
+  animation: lava 30s ease infinite;
+}
+
+/* Make the background of the body fixed to the viewport for long pages  */
+body.lava::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: -1;
   background: linear-gradient(315deg, var(--accent), var(--bg));
   background-size: 400% 400%;
   animation: lava 30s ease infinite;
