@@ -4,9 +4,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="" href="css/style.css">
-  <link rel="stylesheet" type="" href="css/playlist.css">
-  <title><%= playlist.name %></title>
+  <link rel="stylesheet" type="" href="/css/style.css">
+  <link rel="stylesheet" type="" href="/css/playlist.css">
+  <title>
+    <%= playlist.name %>
+  </title>
 </head>
 
 <body class="lava">
@@ -14,7 +16,7 @@
 
     <main class="flex">
       <div class="window flex" id="playlist-header">
-        <% if (playlist.images && playlist.images.length > 0 && playlist.images[0].url) { %>
+        <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
           <img width="300px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
           <% } else { %>
             <img width="300px" src="/media/missing.jpg" alt=":(">
@@ -47,8 +49,9 @@
             <% if (item.track) { %>
               <li class="track-item">
                 <div class="track flex">
-                  <% if (item.track.album && item.track.album.images && item.track.album.images.length > 0) { %>
-                    <img width="64px" height="64px" src="<%= item.track.album.images[2].url %>" alt="<%= item.track.name %>">
+                  <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
+                    <img width="64px" height="64px" src="<%= item.track.album.images[2].url %>"
+                      alt="<%= item.track.name %>">
                     <% } else { %>
                       <img width="64px" height="64px" src="/media/missing.jpg" alt=":(">
                       <% } %>
@@ -57,7 +60,7 @@
                             <%= item.track.name %>
                           </h3>
                           <p>
-                            <%= item.track.artists.map(a => a.name).join(", ") %>
+                            <%= item.track.artists.map(a=> a.name).join(", ") %>
                           </p>
                         </div>
                         <div class="track-album">
@@ -66,12 +69,12 @@
                           </p>
                         </div>
                         <div class="track-duration">
-                          <% 
-                            const minutes = Math.floor((item.track.duration_ms || 0) / 60000);
-                            const seconds = Math.floor(((item.track.duration_ms || 0) % 60000) / 1000);
-                            const formatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                          %>
-                          <span><%= formatted %></span>
+                          <% const minutes=Math.floor((item.track.duration_ms || 0) / 60000); const
+                            seconds=Math.floor(((item.track.duration_ms || 0) % 60000) / 1000); const
+                            formatted=`${minutes}:${seconds.toString().padStart(2, '0' )}`; %>
+                            <span>
+                              <%= formatted %>
+                            </span>
                         </div>
                 </div>
               </li>
@@ -86,4 +89,3 @@
 </body>
 
 </html>
-
