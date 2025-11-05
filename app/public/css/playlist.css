@@ -1,3 +1,7 @@
+a {
+  text-decoration: none;
+}
+
 #playlist-header {
     flex-direction: row;
     align-items: center;
@@ -83,7 +87,6 @@
 
 .track-info p {
     font-size: 0.9rem;
-    color: var(--bg-light);
     margin: 0;
     padding: 0;
     white-space: nowrap;
@@ -97,7 +100,6 @@
 }
 
 .track-album p {
-    color: var(--bg-light);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
