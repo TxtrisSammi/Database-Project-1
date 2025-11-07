@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="" href="css/style.css">
   <link rel="stylesheet" type="" href="css/user.css">
-  <title>Home</title>
+  <title><%= user.display_name %></title>
 </head>
 
 <body class="lava">
@@ -56,6 +56,10 @@
             </li>
             <% } %>
         </ul>
+        <div class="window" id="missing-playlists">
+          <h3>Missing playlists?</h3>
+          <p>You may need to add them to your profile through the spotify player.</p>
+        </div>
       </div>
 
     </main>

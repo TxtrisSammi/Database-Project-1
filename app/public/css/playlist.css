@@ -71,6 +71,7 @@ a {
     align-items: center;
     gap: 1rem;
     width: 100%;
+    padding: 0.5rem;
 }
 
 .track img {
@@ -116,6 +117,7 @@ a {
     color: var(--bg-light);
     min-width: 50px;
     text-align: right;
+    padding: 1rem;
 }
 
 #stats {

@@ -42,3 +42,7 @@
   transform: translateX(5px);
   border-color: var(--active);
 }
+
+#missing-playlists {
+  text-align: center;
+}

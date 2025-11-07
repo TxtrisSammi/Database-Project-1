@@ -146,7 +146,7 @@ body.lava::before {
   z-index: -1;
   background: linear-gradient(315deg, var(--accent), var(--bg));
   background-size: 400% 400%;
-  animation: lava 30s ease infinite;
+  animation: lava 20s ease infinite;
 }
 
 @keyframes lava {
