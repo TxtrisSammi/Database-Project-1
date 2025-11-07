@@ -51,7 +51,7 @@
         <ul class="track-list">
           <% for (const item of tracks) { %>
             <% if (item.track) { %>
-              <a href="https://open.spotify.com/track/ <%= item.track.id %>">
+              <a target="_blank" href="https://open.spotify.com/track/ <%= item.track.id %>">
                 <li class="track-item">
                   <div class="track flex">
                     <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
