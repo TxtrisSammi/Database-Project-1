@@ -28,4 +28,17 @@
 
 #account-type.lava {
   border: 2px solid var(--active);
-  animation-duration: 5s; }
+  animation-duration: 5s;
+}
+
+.listing {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+  padding: 0.5rem;
+}
+
+.listing:hover {
+  transform: translateX(5px);
+  border-color: var(--active);
+}

@@ -1,23 +1,24 @@
-const { stringify } = require("querystring"); const express = require("express")
+const express = require("express")
 const app = express.Router()
+const { ensureValidToken } = require("../utils/tokenRefresh")
+const { validatePlaylistId } = require("../middleware/validateInput")
 
-app.get("/playlists/:id", async (req, res) => {
+app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
   let id = req.params.id
-  let token = req.session.authToken
 
-  if (token && id) {
-    try {
-      let playlist = await getPlaylistInfo(token, id)
-      let tracks = await getTracks(token, id)
-      res.render("playlist.ejs", { playlist: playlist, tracks: tracks })
-    } catch (error) {
-      console.error("Error fetching playlist:", error)
-      res.redirect("/user")
+  try {
+    let token = await ensureValidToken(req)
+    
+    if (!token) {
+      return res.redirect("/auth")
     }
-  } else {
-    res.redirect("/user")
-  }
 
+    let playlist = await getPlaylistInfo(token, id)
+    let tracks = await getTracks(token, id)
+    res.render("playlist.ejs", { playlist: playlist, tracks: tracks })
+  } catch (error) {
+    next(error)
+  }
 })
 
 async function getPlaylistInfo(accessToken, id) {
@@ -26,29 +27,51 @@ async function getPlaylistInfo(accessToken, id) {
       Authorization: "Bearer " + accessToken
     }
   })
+  
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(`Token expired or invalid: ${response.status}`)
+    }
     throw new Error(`Failed to fetch playlist: ${response.status}`)
   }
+  
   const data = await response.json()
+  
+  if (!data || !data.id) {
+    throw new Error("Invalid playlist data received")
+  }
+  
   return data
 }
 
 async function getTracks(accessToken, id) {
   let tracks = []
   let url = `https://api.spotify.com/v1/playlists/${id}/tracks`
+  
   while (url) {
     const response = await fetch(url, {
       headers: {
         Authorization: "Bearer " + accessToken
       }
     })
+    
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`Token expired or invalid: ${response.status}`)
+      }
       throw new Error(`Failed to fetch tracks: ${response.status}`)
     }
+    
     const data = await response.json()
-    tracks = tracks.concat(data.items);
+    
+    if (!data || !Array.isArray(data.items)) {
+      throw new Error("Invalid tracks data received")
+    }
+    
+    tracks = tracks.concat(data.items)
     url = data.next
   }
+  
   return tracks
 }
 

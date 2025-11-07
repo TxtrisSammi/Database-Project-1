@@ -54,10 +54,17 @@ a {
 .track-item {
     border-bottom: 1px solid var(--bg-accent);
     padding: 0.5rem 0;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    border-radius: 5px;
 }
 
 .track-item:last-child {
     border-bottom: none;
+}
+
+.track-item:hover {
+    background-color: var(--bg-accent);
+    transform: translateX(5px);
 }
 
 .track {
@@ -109,5 +116,15 @@ a {
     color: var(--bg-light);
     min-width: 50px;
     text-align: right;
+}
+
+#stats {
+    flex-direction: column;
+}
+
+#stats h2 {
+    font-size: 2.5rem;
+    margin: 0;
+    padding: 0;
 }
 

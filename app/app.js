@@ -21,9 +21,10 @@ app.use(session({
 }))
 
 // import routes
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/user");
+const authRoutes = require("./routes/auth")
+const userRoutes = require("./routes/user")
 const playRoutes = require("./routes/playlists")
+const errorHandler = require("./middleware/errorHandler")
 
 // landing page
 app.get('/', (req, res) => {
@@ -34,6 +35,9 @@ app.get('/', (req, res) => {
 app.use("/", authRoutes)
 app.use("/", userRoutes)
 app.use("/", playRoutes)
+
+// error handling middleware (must be last)
+app.use(errorHandler)
 
 // listen for connections
 app.listen(port, function () {

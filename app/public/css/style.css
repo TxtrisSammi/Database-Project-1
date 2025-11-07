@@ -16,7 +16,8 @@
 }
 
 html, body, main {
-  height: 100%;
+  min-height: 100%;
+  height: fit-content;
 }
 
 main {
@@ -40,6 +41,7 @@ main {
 /* Nav */
 
 header {
+  z-index: 100;
   border-bottom: 5px solid var(--active);
   border-radius: var(--border-radius);
   position: sticky;
@@ -79,6 +81,16 @@ nav a:hover {
 
 /* Footer */
 
+footer {
+  border-top: 5px solid var(--active);
+  border-radius: var(--border-radius);
+  background-color: var(--bg);
+  padding: 1rem 3%;
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--bg-light);
+}
+
 /* Button */
 .big-button {
   border: none;
@@ -94,7 +106,7 @@ nav a:hover {
 
 /* Listing (playlists, tracks, etc) */ 
 .listing-list {
-  list-style-type: none;id
+  list-style-type: none;
   margin: 0;
   padding: 0;
   flex-direction: column;
