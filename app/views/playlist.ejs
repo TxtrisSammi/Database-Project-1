@@ -47,37 +47,39 @@
         <ul class="track-list">
           <% for (const item of tracks) { %>
             <% if (item.track) { %>
-              <li class="track-item">
-                <div class="track flex">
-                  <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
-                    <img width="64px" height="64px" src="<%= item.track.album.images[2].url %>"
-                      alt="<%= item.track.name %>">
-                    <% } else { %>
-                      <img width="64px" height="64px" src="/media/missing.jpg" alt=":(">
-                      <% } %>
-                        <div class="track-info">
-                          <h3>
-                            <%= item.track.name %>
-                          </h3>
-                          <p>
-                            <%= item.track.artists.map(a=> a.name).join(", ") %>
-                          </p>
-                        </div>
-                        <div class="track-album">
-                          <p>
-                            <%= item.track.album ? item.track.album.name : "Unknown Album" %>
-                          </p>
-                        </div>
-                        <div class="track-duration">
-                          <% const minutes=Math.floor((item.track.duration_ms || 0) / 60000); const
-                            seconds=Math.floor(((item.track.duration_ms || 0) % 60000) / 1000); const
-                            formatted=`${minutes}:${seconds.toString().padStart(2, '0' )}`; %>
-                            <span>
-                              <%= formatted %>
-                            </span>
-                        </div>
-                </div>
-              </li>
+              <a href="https://open.spotify.com/track/ <%= item.track.id %>">
+                <li class="track-item">
+                  <div class="track flex">
+                    <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
+                      <img width="64px" height="64px" src="<%= item.track.album.images[2].url %>"
+                        alt="<%= item.track.name %>">
+                      <% } else { %>
+                        <img width="64px" height="64px" src="/media/missing.jpg" alt=":(">
+                        <% } %>
+                          <div class="track-info">
+                            <h3>
+                              <%= item.track.name %>
+                            </h3>
+                            <p>
+                              <%= item.track.artists.map(a=> a.name).join(", ") %>
+                            </p>
+                          </div>
+                          <div class="track-album">
+                            <p>
+                              <%= item.track.album ? item.track.album.name : "Unknown Album" %>
+                            </p>
+                          </div>
+                          <div class="track-duration">
+                            <% const minutes=Math.floor((item.track.duration_ms || 0) / 60000); const
+                              seconds=Math.floor(((item.track.duration_ms || 0) % 60000) / 1000); const
+                              formatted=`${minutes}:${seconds.toString().padStart(2, '0' )}`; %>
+                              <span>
+                                <%= formatted %>
+                              </span>
+                          </div>
+                  </div>
+                </li>
+              </a>
               <% } %>
                 <% } %>
         </ul>

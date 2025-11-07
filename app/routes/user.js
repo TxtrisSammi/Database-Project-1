@@ -9,8 +9,6 @@ app.get("/user", async (req, res) => {
     let user = await getProfile(token)
     let playlists = await getPlaylists(token)
 
-    console.log(playlists)
-
     res.render("user.ejs", { user: user, playlists: playlists })
     // res.send(data)
   } else {

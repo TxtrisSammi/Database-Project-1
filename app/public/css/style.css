@@ -42,6 +42,10 @@ main {
 header {
   border-bottom: 5px solid var(--active);
   border-radius: var(--border-radius);
+  position: sticky;
+  top: 0; 
+  /* TODO: Stops following after a certain distance, a little before where the unfinished footer text displats */ 
+  /* TODO: Also, fix the footer */
 }
 
 nav {
