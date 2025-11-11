@@ -30,7 +30,7 @@ con.connect(function (err) {
   console.log("connected");
 
   // drop all for sake of debugging
-  // dropAll(con, tables)
+  dropAll(con, tables)
 
   // create tables
   createAll(con)
@@ -116,6 +116,13 @@ function createAll(con) {
     );
     `
 
+  let emojiFix = `
+  ALTER DATABASE ${process.env.DB} 
+  CHARACTER SET utf8mb4 
+  COLLATE utf8mb4_unicode_ci
+  ;
+  `
+
   let queries = [
     createUser,
     createTrack,
@@ -124,7 +131,8 @@ function createAll(con) {
     createTrackGenre,
     createTrackArtist,
     createPlaylist,
-    createPlaylistTrack
+    createPlaylistTrack,
+    emojiFix
   ]
 
   let createAll = ""
@@ -160,3 +168,4 @@ function selectAll(con, tables) {
     })
   }
 }
+
