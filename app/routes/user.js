@@ -2,6 +2,7 @@ const express = require("express")
 const app = express.Router()
 const { ensureValidToken } = require("../utils/tokenRefresh")
 const { addUser } = require("../db/add-user")
+const { addPlaylists } = require("../db/add-playlists")
 
 app.get("/user", async (req, res, next) => {
   try {
@@ -13,8 +14,9 @@ app.get("/user", async (req, res, next) => {
 
     let user = await getProfile(token)
     let playlists = await getPlaylists(token)
+
     addUser(user.id, user.display_name)
-    // Error: TypeError: addUser is not a function
+    addPlaylists(playlists, user.id)
 
     res.render("user.ejs", { user: user, playlists: playlists })
   } catch (error) {
