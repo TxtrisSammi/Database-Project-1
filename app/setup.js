@@ -32,87 +32,87 @@ con.connect(function (err) {
   // dropAll(con, tables)
 
   // create tables
-  // createAll(con)
+  createAll(con)
 
   // etc
-  // selectAll(con, tables)
+  selectAll(con, tables)
 })
 
 function createAll(con) {
   let createUser = `
     create table User
-    (userId varchar(30) primary key, username varchar(50))
+    (userId varchar(30) primary key, username varchar(50)
+    );
     `
 
   let createTrack = `
     create table Track (
-        Trackid char(30) primary key,
-        
-        TrackName char(100),
-        Album char(100)
-    )
+        Trackid varchar(30) primary key,
+        TrackName varchar(255),
+        Album varchar(255)
+    );
     `
 
   let createArtist = `
     create table Artist (
-        ArtistId char(30) primary key,
-        ArtistName char(100)
-    )
+        ArtistId varchar(30) primary key,
+        ArtistName varchar(255)
+    );
     `
 
   let createArtistGenre = `
     create table ArtistGenre (
-        TrackId char(30),
-        TrackGenre char(100),
+        TrackId varchar(30),
+        TrackGenre varchar(255),
         primary key (TrackId, TrackGenre),
         foreign key (TrackId) references Track(Trackid)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createTrackGenre = `
     create table TrackGenre (
-        ArtistId char(30),
-        ArtistGenre char(100),
+        ArtistId varchar(30),
+        ArtistGenre varchar(255),
         primary key (ArtistId, ArtistGenre),
         foreign key (ArtistId) references Artist(ArtistId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createTrackArtist = `
     create table TrackArtist (
-        Trackid char(30),
-        ArtistId char(30),
+        Trackid varchar(30),
+        ArtistId varchar(30),
         primary key (Trackid, ArtistId),
         foreign key (Trackid) references Track(Trackid)
             on update cascade on delete cascade,
         foreign key (ArtistId) references Artist(ArtistId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createPlaylist = `
     create table Playlist (
-        PlaylistId char(30) primary key,
-        PlaylistName char(30),
-        PlaylistDescription char(100),
-        UserId char(30),
+        PlaylistId varchar(30) primary key,
+        PlaylistName varchar(255),
+        PlaylistDescription varchar(255),
+        UserId varchar(30),
         foreign key (UserId) references User(userId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let createPlaylistTrack = `
     create table PlaylistTrack (
-        TrackId char(30),
-        PlaylistId char(30),
+        TrackId varchar(30),
+        PlaylistId varchar(30),
         primary key (TrackId, PlaylistId),
         foreign key (TrackId) references Track(Trackid)
             on update cascade on delete cascade,
         foreign key (PlaylistId) references Playlist(PlaylistId)
             on update cascade on delete cascade
-    )
+    );
     `
 
   let queries = [
@@ -126,10 +126,9 @@ function createAll(con) {
     createPlaylistTrack
   ]
 
-  let createAll
+  let createAll = ""
 
   for (const query of queries) {
-    createAll += "\n"
     createAll += query
   }
 
