@@ -9,6 +9,7 @@ let con = mysql.createConnection({
   password: process.env.PASS,
   database: process.env.DB,
   port: process.env.PORT || 3306,
+  charset: 'utf8mb4',
   multipleStatements: true
 });
 
@@ -37,6 +38,10 @@ con.connect(function (err) {
 
   // etc
   selectAll(con, tables)
+
+  // fix emojis
+  // emojiFix(con)
+
 })
 
 function createAll(con) {
@@ -116,12 +121,7 @@ function createAll(con) {
     );
     `
 
-  let emojiFix = `
-  ALTER DATABASE ${process.env.DB} 
-  CHARACTER SET utf8mb4 
-  COLLATE utf8mb4_unicode_ci
-  ;
-  `
+  
 
   let queries = [
     createUser,
@@ -131,8 +131,7 @@ function createAll(con) {
     createTrackGenre,
     createTrackArtist,
     createPlaylist,
-    createPlaylistTrack,
-    emojiFix
+    createPlaylistTrack
   ]
 
   let createAll = ""
@@ -167,5 +166,35 @@ function selectAll(con, tables) {
       console.log(res)
     })
   }
+}
+
+function emojiFix(con) {
+// uncomment if emoji's are causing issues
+// let x = `
+//   ALTER DATABASE ${process.env.DB} 
+//   CHARACTER SET utf8mb4 
+//   COLLATE utf8mb4_unicode_ci
+//   ;
+//   `
+// con.query(x)
+
+
+// checks charsets 
+// (make sure client, connection, and database are uft8mb4 NOT utf8mb3 
+// if you want emojis to work)
+  let y = `
+  SHOW VARIABLES 
+  WHERE Variable_name 
+  LIKE 'character\_set\_%' 
+  OR Variable_name 
+  LIKE 'collation%'
+  ;
+  `
+  
+  con.query(y, (err, res) => {
+    console.log(res)
+  })
+
+  
 }
 

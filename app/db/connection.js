@@ -8,6 +8,7 @@ function newConnection() {
     password: process.env.PASS,
     database: process.env.DB,
     port: process.env.PORT || 3306,
+    charset: 'utf8mb4',
     multipleStatements: true
   });
   return con
