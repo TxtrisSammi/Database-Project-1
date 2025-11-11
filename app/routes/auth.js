@@ -6,7 +6,7 @@ const app = express.Router()
 // this runs when user clicks sign in with spotify and redirects them to the spotify authorization page
 app.get("/login", (req, res) => {
   // set scope of what our app can do
-  const scope = ["user-read-private", "user-read-email"]
+  const scope = ["user-read-private", "user-read-email", "playlist-read-private", "playlist-read-collaborative"]
   // send user to auth page with our app credentials
   res.redirect("https://accounts.spotify.com/authorize?" + stringify({
     response_type: "code",
@@ -19,9 +19,12 @@ app.get("/login", (req, res) => {
 // this is where the user is sent after authorizing our app 
 // and it requests a token from spotify so that we can use the api in the name of the user
 app.get("/callback", async (req, res) => {
-  // gets the code from the url, if there is no code available, set it to null
-  // TODO: redirect the user back to auth if no token
-  const code = req.query.code || null;
+  // gets the code from the url, if there is no code available, redirect to login
+  const code = req.query.code || null
+  
+  if (!code) {
+    return res.redirect("/login")
+  }
   // this builds the token request
   const authOptions = {
     method: "POST",
@@ -37,22 +40,35 @@ app.get("/callback", async (req, res) => {
   };
 
   // send the request and wait for it to return
-  const tokenResponse = await fetch("https://accounts.spotify.com/api/token", authOptions);
+  const tokenResponse = await fetch("https://accounts.spotify.com/api/token", authOptions)
+
+  if (!tokenResponse.ok) {
+    console.error("Failed to get token:", tokenResponse.status)
+    return res.redirect("/login")
+  }
 
   // read the token as json
-  const tokenData = await tokenResponse.json();
+  const tokenData = await tokenResponse.json()
 
-  // extract token
-  const accessToken = tokenData.access_token;
+  if (!tokenData || !tokenData.access_token) {
+    console.error("Invalid token response")
+    return res.redirect("/login")
+  }
 
-  // use token to get user data
-  // const userData = await getProfile(accessToken);
+  // extract tokens
+  const accessToken = tokenData.access_token
+  const refreshToken = tokenData.refresh_token
 
-  // res.send({ user: userData });
-
-  // store token in session
+  // store tokens in session
   req.session.authToken = accessToken
+  if (refreshToken) {
+    req.session.refreshToken = refreshToken
+  }
   res.redirect("/user")
 });
+
+app.get("/auth", (req, res) => {
+  res.redirect("/login")
+})
 
 module.exports = app
