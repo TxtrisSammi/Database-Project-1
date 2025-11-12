@@ -4,6 +4,7 @@ const { ensureValidToken } = require("../utils/tokenRefresh")
 const { addUser } = require("../db/add-user")
 const { addPlaylists } = require("../db/add-playlists")
 
+
 app.get("/user", async (req, res, next) => {
   try {
     let token = await ensureValidToken(req)
