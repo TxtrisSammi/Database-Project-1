@@ -1,6 +1,6 @@
 const newConnection = require('./connection');
 
-async function addTracks(tracks) {
+async function addTracks(tracks, playlistId) {
   const con = newConnection();
 
   try {
@@ -14,17 +14,39 @@ async function addTracks(tracks) {
       let insert = `
                     INSERT INTO Track (TrackId, TrackName, Album) VALUES (?, ?, ?) 
                     ON DUPLICATE KEY UPDATE 
-                    TrackName = VALUES(TrackName), Tlbum = VALUES(Album)`;
+                    TrackName = VALUES(TrackName), Album = VALUES(Album)`;
 
       con.query(insert, [trackId, trackName, album], function (err, result) {
         if (err) throw err;
         console.log(`track ${trackName} inserted/updated`);
       });
 
-      let ArtistId = item.track.artist.id;
+      let artistId = "";
+      let artistName = "";
+      
+      let artists = item.track.artists;
+      for (let i = 0; i < artists.length; i++) {
+        artistId += artists[i].id;
+        artistName += artists[i].name;
+        insert = `
+                INSERT INTO Artist (ArtistId, ArtistName) VALUES(?, ?)
+                ON DUPLICATE KEY UPDATE
+                ArtistName = VALUES(ArtistName)`
+        con.query(insert, [artistId, artistName], function(err, result) {
+          if (err) throw err;
+          console.log(`Artist ${artistName} Inserted/Updated`)
+        } )
+      }
 
       insert = `
-                INSERT INTO TrackArtist (TrackId)`
+                INSERT INTO TrackArtist (TrackId, ArtistId) VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE
+                ArtistId = VALUES(ArtistId)`
+
+      con.query(insert, [trackId, artistId], function (err, result) {
+        if (err) throw err;
+        console.log(`TrackArtist ${artistId} inserted/updated`)
+      })
 
     }
 
