@@ -7,7 +7,7 @@ async function addUser(id, name) {
     con.connect();
     console.log('Connected to the database!');
 
-    let insert = `INSERT INTO User (userId, username) VALUES (?, ?) ON DUPLICATE KEY UPDATE username = VALUES(username)`;
+    let insert = `INSERT INTO User (UserId, UserName) VALUES (?, ?) ON DUPLICATE KEY UPDATE UserName = VALUES(UserName)`;
 
     con.query(insert, [id, name], function (err, result) {
       if (err) {

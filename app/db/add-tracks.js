@@ -12,14 +12,19 @@ async function addTracks(tracks) {
       let album = item.track.album.name;
 
       let insert = `
-                    INSERT INTO Track (trackId, trackName, album) VALUES (?, ?, ?) 
+                    INSERT INTO Track (TrackId, TrackName, Album) VALUES (?, ?, ?) 
                     ON DUPLICATE KEY UPDATE 
-                    trackName = VALUES(trackName), album = VALUES(album)`;
+                    TrackName = VALUES(TrackName), Tlbum = VALUES(Album)`;
 
       con.query(insert, [trackId, trackName, album], function (err, result) {
         if (err) throw err;
         console.log(`track ${trackName} inserted/updated`);
       });
+
+      let ArtistId = item.track.artist.id;
+
+      insert = `
+                INSERT INTO TrackArtist (TrackId)`
 
     }
 
