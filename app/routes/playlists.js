@@ -3,6 +3,7 @@ const app = express.Router()
 const { ensureValidToken } = require("../utils/tokenRefresh")
 const { validatePlaylistId } = require("../middleware/validateInput")
 const { addTracks } = require("../db/add-tracks")
+// const { addGenre } = require("../db/add-genre")
 
 app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
   let id = req.params.id
@@ -16,7 +17,10 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
 
     let playlist = await getPlaylistInfo(token, id)
     let tracks = await getTracks(token, id)
-    addTracks(tracks)
+    
+
+    addTracks(tracks, id)
+    
     res.render("playlist.ejs", { playlist: playlist, tracks: tracks })
     
   } catch (error) {
@@ -46,6 +50,7 @@ async function getPlaylistInfo(accessToken, id) {
   
   return data
 }
+
 
 async function getTracks(accessToken, id) {
   let tracks = []
