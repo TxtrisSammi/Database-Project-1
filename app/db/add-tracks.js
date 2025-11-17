@@ -1,5 +1,5 @@
 const newConnection = require('./connection');
-const { refreshAccessToken } = require('../utils/tokenRefresh'); 
+const { addGenre } = require("./add-genre")
 
 async function addTracks(tracks, playlistId, token) {
   const con = newConnection();
@@ -78,7 +78,7 @@ async function addTracks(tracks, playlistId, token) {
 }
 
 async function getArtistInfo(accessToken, id) {
-  let artists = []
+  let artists = '';
   let url =  `https://api.spotify.com/v1/artists/${id}`
 
   while (url) {
@@ -96,16 +96,12 @@ async function getArtistInfo(accessToken, id) {
     }
 
     const data = await response.json();
-
-    if (!data || !Array.isArray(data.items)) {
-      throw new Error(`Invalid artists data received`)
-    }
-
-    artists = artists.concat(data.items)
+    artists = data
     url = data.next
   }
+  // console.log(artists)
 
-  return artist
+  return artists
 }
 
 module.exports = { addTracks };
