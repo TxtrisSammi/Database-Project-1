@@ -3,7 +3,6 @@ const newConnection = require('./connection');
 async function addGenre(artistId, artist, trackId) {
     const con = newConnection();
 
-
     try {
         console.log('Connected to the database!');
 
@@ -16,7 +15,6 @@ async function addGenre(artistId, artist, trackId) {
                 genreString += ", ";
             }
         })
-
 
         let insert = `
                 INSERT INTO TrackGenre (ArtistId, ArtistGenre) VALUES (?, ?) 

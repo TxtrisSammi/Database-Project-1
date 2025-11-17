@@ -3,7 +3,7 @@ const app = express.Router()
 const { ensureValidToken } = require("../utils/tokenRefresh")
 const { validatePlaylistId } = require("../middleware/validateInput")
 const { addTracks } = require("../db/add-tracks")
-// const { addGenre } = require("../db/add-genre")
+
 
 app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
   let id = req.params.id

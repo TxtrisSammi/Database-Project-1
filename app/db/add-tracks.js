@@ -29,7 +29,7 @@ async function addTracks(tracks, playlistId, token) {
 
       con.query(insert, [trackId, playlistId], function (err, res) {
         if (err) throw err;
-        console.log(`Updated playlist ${playlistId}`)
+        console.log(`Updated playlist ${playlistId}`);
       })
       let artistId = "";
       let artistName = "";
@@ -41,25 +41,25 @@ async function addTracks(tracks, playlistId, token) {
         insert = `
                 INSERT INTO Artist (ArtistId, ArtistName) VALUES(?, ?)
                 ON DUPLICATE KEY UPDATE
-                ArtistName = VALUES(ArtistName)`
+                ArtistName = VALUES(ArtistName)`;
         con.query(insert, [artistId, artistName], function(err, result) {
           if (err) throw err;
-          console.log(`Artist ${artistName} Inserted/Updated`)
+          console.log(`Artist ${artistName} Inserted/Updated`);
         } )
 
-        let artistInfo = await getArtistInfo(token, artistId)
+        let artistInfo = await getArtistInfo(token, artistId);
 
-        addGenre(artistId, artistInfo, trackId)
+        addGenre(artistId, artistInfo, trackId);
       }
 
       insert = `
                 INSERT INTO TrackArtist (TrackId, ArtistId) VALUES (?, ?)
                 ON DUPLICATE KEY UPDATE
-                ArtistId = VALUES(ArtistId)`
+                ArtistId = VALUES(ArtistId)`;
 
       con.query(insert, [trackId, artistId], function (err, result) {
         if (err) throw err;
-        console.log(`TrackArtist ${artistId} inserted/updated`)
+        console.log(`TrackArtist ${artistId} inserted/updated`);
       })
 
     }
@@ -79,7 +79,7 @@ async function addTracks(tracks, playlistId, token) {
 
 async function getArtistInfo(accessToken, id) {
   let artists = '';
-  let url =  `https://api.spotify.com/v1/artists/${id}`
+  let url =  `https://api.spotify.com/v1/artists/${id}`;
 
   while (url) {
     const response = await fetch(url, {
@@ -96,12 +96,11 @@ async function getArtistInfo(accessToken, id) {
     }
 
     const data = await response.json();
-    artists = data
-    url = data.next
+    artists = data;
+    url = data.next;
   }
-  // console.log(artists)
 
-  return artists
+  return artists;
 }
 
 module.exports = { addTracks };
