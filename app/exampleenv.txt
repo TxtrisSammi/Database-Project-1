@@ -1,0 +1,13 @@
+// Your .env file for this app should resemble the following
+
+# DB:
+HOST=localhost
+USER=user
+PASS=passsword
+DB=app
+# Spotify:
+ID=7b3e736a6c24sdsdfsdfdsfsfakeid
+SECRET=00be4802sdfsdfdsfakesecret
+REDIRECT=http://127.0.0.1:8080/callback
+# Session:
+SESSION_SECRET=secretesessionsecretbutfake

@@ -40,7 +40,7 @@ con.connect(function (err) {
   selectAll(con, tables)
 
   // fix emojis
-  // emojiFix(con)
+  emojiFix(con)
 
 })
 
@@ -121,7 +121,7 @@ function createAll(con) {
     );
     `
 
-  
+
 
   let queries = [
     createUser,
@@ -169,19 +169,19 @@ function selectAll(con, tables) {
 }
 
 function emojiFix(con) {
-// uncomment if emoji's are causing issues
-// let x = `
-//   ALTER DATABASE ${process.env.DB} 
-//   CHARACTER SET utf8mb4 
-//   COLLATE utf8mb4_unicode_ci
-//   ;
-//   `
-// con.query(x)
+  // uncomment if emoji's are causing issues
+  // let x = `
+  //   ALTER DATABASE ${process.env.DB} 
+  //   CHARACTER SET utf8mb4 
+  //   COLLATE utf8mb4_unicode_ci
+  //   ;
+  //   `
+  // con.query(x)
 
 
-// checks charsets 
-// (make sure client, connection, and database are uft8mb4 NOT utf8mb3 
-// if you want emojis to work)
+  // checks charsets 
+  // (make sure client, connection, and database are uft8mb4 NOT utf8mb3 
+  // if you want emojis to work)
   let y = `
   SHOW VARIABLES 
   WHERE Variable_name 
@@ -190,11 +190,11 @@ function emojiFix(con) {
   LIKE 'collation%'
   ;
   `
-  
+
   con.query(y, (err, res) => {
     console.log(res)
   })
 
-  
+
 }
 
