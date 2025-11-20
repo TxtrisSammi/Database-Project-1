@@ -1,5 +1,5 @@
 const newConnection = require('./connection');
-const { refreshAccessToken } = require('../utils/tokenRefresh'); 
+const { addGenre } = require("./add-genre")
 
 async function addTracks(tracks, playlistId, token) {
   const con = newConnection();
@@ -96,16 +96,11 @@ async function getArtistInfo(accessToken, id) {
     }
 
     const data = await response.json();
-
-    if (!data || !Array.isArray(data.items)) {
-      throw new Error(`Invalid artists data received`)
-    }
-
-    artists = artists.concat(data.items)
-    url = data.next
+    artists = data;
+    url = data.next;
   }
 
-  return artist
+  return artists;
 }
 
 module.exports = { addTracks };

@@ -31,7 +31,7 @@ con.connect(function (err) {
   console.log("connected");
 
   // drop all for sake of debugging
-  dropAll(con, tables)
+  // dropAll(con, tables)
 
   // create tables
   createAll(con)

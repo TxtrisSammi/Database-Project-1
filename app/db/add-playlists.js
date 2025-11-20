@@ -12,9 +12,9 @@ async function addPlaylists(playlists, userId) {
       let playlistDescription = playlist.description;
 
       let insert = `
-                    INSERT INTO Playlist (playlistId, playlistName, playlistDescription, userId) VALUES (?, ?, ?, ?) 
+                    INSERT INTO Playlist (PlaylistId, PlaylistName, PlaylistDescription, UserId) VALUES (?, ?, ?, ?) 
                     ON DUPLICATE KEY UPDATE 
-                    playlistName = VALUES(playlistName), playlistDescription = VALUES(playlistDescription)`;
+                    PlaylistName = VALUES(PlaylistName), PlaylistDescription = VALUES(PlaylistDescription)`;
 
       con.query(insert, [playlistId, playlistName, playlistDescription, userId], function (err, result) {
         if (err) throw err;
