@@ -1,9 +1,10 @@
 // imports
-require("dotenv").config(); // allow reading from .env
+require("dotenv").config();
 const mysql = require("mysql");
+const util = require("util");
 
 // setup db connection
-let con = mysql.createConnection({
+const con = mysql.createConnection({
   host: process.env.HOST,
   user: process.env.USER,
   password: process.env.PASS,
@@ -13,117 +14,146 @@ let con = mysql.createConnection({
   multipleStatements: true
 });
 
+// promisify query for async/await
+const query = util.promisify(con.query).bind(con);
 
-let tables = [
-  "User",
+const tables = [
+  "PlaylistTrack",
+  "Playlist",
+  "TrackArtist",
+  "TrackGenre",
+  "ArtistGenre",
   "Track",
   "Artist",
-  "ArtistGenre",
-  "TrackGenre",
-  "TrackArtist",
-  "Playlist",
-  "PlaylistTrack"
-]
+  "User"
+];
 
-// connect and perform queries
-con.connect(function (err) {
-  if (err) throw err; // if theres an error connecting, throw error
-  console.log("connected");
+// main execution
+async function main() {
+  try {
+    await connectDB();
 
-  // drop all for sake of debugging
-  // dropAll(con, tables)
+    const args = process.argv.slice(2);
+    const shouldDrop = args.includes("--drop");
+    const shouldVerify = args.includes("--verify");
 
-  // create tables
-  createAll(con)
+    if (shouldDrop) {
+      console.log("\n=== Dropping existing tables ===");
+      await dropAll();
+    }
 
-  // etc
-  selectAll(con, tables)
+    console.log("\n=== Creating tables ===");
+    await createAll();
 
-  // fix emojis
-  emojiFix(con)
+    if (shouldVerify) {
+      console.log("\n=== Verifying tables ===");
+      await verifyTables();
+    }
 
-})
+    console.log("\n✓ Database setup completed successfully");
 
-function createAll(con) {
-  let createUser = `
-    create table User
-    (userId varchar(30) primary key, username varchar(50)
+  } catch (err) {
+    console.error("✗ Setup failed:", err.message);
+    process.exit(1);
+  } finally {
+    con.end();
+  }
+}
+
+function connectDB() {
+  return new Promise((resolve, reject) => {
+    con.connect((err) => {
+      if (err) {
+        reject(new Error(`Connection failed: ${err.message}`));
+      } else {
+        console.log("✓ Connected to database");
+        resolve();
+      }
+    });
+  });
+}
+
+main();
+
+async function createAll() {
+  const createUser = `
+    CREATE TABLE IF NOT EXISTS User (
+      UserId VARCHAR(255) PRIMARY KEY,
+      Username VARCHAR(255)
     );
-    `
+  `;
 
-  let createTrack = `
-    create table Track (
-        Trackid varchar(30) primary key,
-        TrackName varchar(255),
-        Album varchar(255)
+  const createTrack = `
+    CREATE TABLE IF NOT EXISTS Track (
+      TrackId VARCHAR(255) PRIMARY KEY,
+      TrackName VARCHAR(255),
+      Album VARCHAR(255)
     );
-    `
+  `;
 
-  let createArtist = `
-    create table Artist (
-        ArtistId varchar(30) primary key,
-        ArtistName varchar(255)
+  const createArtist = `
+    CREATE TABLE IF NOT EXISTS Artist (
+      ArtistId VARCHAR(255) PRIMARY KEY,
+      ArtistName VARCHAR(255)
     );
-    `
+  `;
 
-  let createArtistGenre = `
-    create table ArtistGenre (
-        TrackId varchar(30),
-        TrackGenre varchar(255),
-        primary key (TrackId, TrackGenre),
-        foreign key (TrackId) references Track(Trackid)
-            on update cascade on delete cascade
+  const createArtistGenre = `
+    CREATE TABLE IF NOT EXISTS ArtistGenre (
+      TrackId VARCHAR(255),
+      TrackGenre VARCHAR(255),
+      PRIMARY KEY (TrackId, TrackGenre),
+      FOREIGN KEY (TrackId) REFERENCES Track(TrackId)
+        ON UPDATE CASCADE ON DELETE CASCADE
     );
-    `
+  `;
 
-  let createTrackGenre = `
-    create table TrackGenre (
-        ArtistId varchar(30),
-        ArtistGenre varchar(255),
-        primary key (ArtistId, ArtistGenre),
-        foreign key (ArtistId) references Artist(ArtistId)
-            on update cascade on delete cascade
+  const createTrackGenre = `
+    CREATE TABLE IF NOT EXISTS TrackGenre (
+      ArtistId VARCHAR(255),
+      ArtistGenre VARCHAR(255),
+      PRIMARY KEY (ArtistId, ArtistGenre),
+      FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)
+        ON UPDATE CASCADE ON DELETE CASCADE
     );
-    `
+  `;
 
-  let createTrackArtist = `
-    create table TrackArtist (
-        Trackid varchar(30),
-        ArtistId varchar(30),
-        primary key (Trackid, ArtistId),
-        foreign key (Trackid) references Track(Trackid)
-            on update cascade on delete cascade,
-        foreign key (ArtistId) references Artist(ArtistId)
-            on update cascade on delete cascade
+  const createTrackArtist = `
+    CREATE TABLE IF NOT EXISTS TrackArtist (
+      TrackId VARCHAR(255),
+      ArtistId VARCHAR(255),
+      PRIMARY KEY (TrackId, ArtistId),
+      FOREIGN KEY (TrackId) REFERENCES Track(TrackId)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)
+        ON UPDATE CASCADE ON DELETE CASCADE
     );
-    `
+  `;
 
-  let createPlaylist = `
-    create table Playlist (
-        PlaylistId varchar(30) primary key,
-        PlaylistName varchar(255),
-        PlaylistDescription varchar(255),
-        UserId varchar(30),
-        foreign key (UserId) references User(userId)
-            on update cascade on delete cascade
+  const createPlaylist = `
+    CREATE TABLE IF NOT EXISTS Playlist (
+      PlaylistId VARCHAR(255) PRIMARY KEY,
+      PlaylistName VARCHAR(255),
+      PlaylistDescription VARCHAR(1000),
+      UserId VARCHAR(255),
+      FOREIGN KEY (UserId) REFERENCES User(UserId)
+        ON UPDATE CASCADE ON DELETE CASCADE
     );
-    `
+  `;
 
-  let createPlaylistTrack = `
-    create table PlaylistTrack (
-        TrackId varchar(30),
-        PlaylistId varchar(30),
-        primary key (TrackId, PlaylistId),
-        foreign key (TrackId) references Track(Trackid)
-            on update cascade on delete cascade,
-        foreign key (PlaylistId) references Playlist(PlaylistId)
-            on update cascade on delete cascade
+  const createPlaylistTrack = `
+    CREATE TABLE IF NOT EXISTS PlaylistTrack (
+      TrackId VARCHAR(255),
+      PlaylistId VARCHAR(255),
+      PRIMARY KEY (TrackId, PlaylistId),
+      FOREIGN KEY (TrackId) REFERENCES Track(TrackId)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY (PlaylistId) REFERENCES Playlist(PlaylistId)
+        ON UPDATE CASCADE ON DELETE CASCADE
     );
-    `
+  `;
 
-
-
-  let queries = [
+  const queries = [
     createUser,
     createTrack,
     createArtist,
@@ -132,69 +162,45 @@ function createAll(con) {
     createTrackArtist,
     createPlaylist,
     createPlaylistTrack
-  ]
+  ];
 
-  let createAll = ""
-
-  for (const query of queries) {
-    createAll += query
+  for (const sql of queries) {
+    await query(sql);
   }
 
-  con.query(createAll, (err) => {
-    if (err) throw err
-    console.log("tables succesfully created");
-  })
+  console.log("✓ All tables created successfully");
 }
 
-function dropAll(con, tables) {
+async function dropAll() {
+  try {
+    await query("SET FOREIGN_KEY_CHECKS = 0");
 
-  let tablesString = tables.join(", ")
+    for (const table of tables) {
+      try {
+        await query(`DROP TABLE IF EXISTS ${table}`);
+        console.log(`  - Dropped ${table}`);
+      } catch (err) {
+        console.warn(`  ⚠ Could not drop ${table}: ${err.message}`);
+      }
+    }
 
-  let dropAll = "drop table " + tablesString
-
-  con.query(dropAll, (err) => {
-    if (err) throw err
-    console.log("tables succesfully dropped");
-  })
-}
-
-function selectAll(con, tables) {
-  for (const table of tables) {
-    let select = "select * from " + table
-    con.query(select, (err, res) => {
-      console.log("selecting " + table)
-      console.log(res)
-    })
+    await query("SET FOREIGN_KEY_CHECKS = 1");
+    console.log("✓ All tables dropped successfully");
+  } catch (err) {
+    throw new Error(`Failed to drop tables: ${err.message}`);
   }
 }
 
-function emojiFix(con) {
-  // uncomment if emoji's are causing issues
-  // let x = `
-  //   ALTER DATABASE ${process.env.DB} 
-  //   CHARACTER SET utf8mb4 
-  //   COLLATE utf8mb4_unicode_ci
-  //   ;
-  //   `
-  // con.query(x)
+async function verifyTables() {
+  const reversedTables = [...tables].reverse();
 
-
-  // checks charsets 
-  // (make sure client, connection, and database are uft8mb4 NOT utf8mb3 
-  // if you want emojis to work)
-  let y = `
-  SHOW VARIABLES 
-  WHERE Variable_name 
-  LIKE 'character\_set\_%' 
-  OR Variable_name 
-  LIKE 'collation%'
-  ;
-  `
-
-  con.query(y, (err, res) => {
-    console.log(res)
-  })
-
-
+  for (const table of reversedTables) {
+    try {
+      const result = await query(`SELECT COUNT(*) as count FROM ${table}`);
+      console.log(`  ✓ ${table}: ${result[0].count} rows`);
+    } catch (err) {
+      console.error(`  ✗ ${table}: ${err.message}`);
+    }
+  }
 }
 

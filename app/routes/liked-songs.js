@@ -1,82 +1,86 @@
 const express = require("express")
 const app = express.Router()
 const { ensureValidToken } = require("../utils/tokenRefresh")
-const { validatePlaylistId } = require("../middleware/validateInput")
-const { addTracks } = require("../db/add-tracks")
+const { addLikedSongs } = require("../db/add-liked-songs")
 
 
-app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
-  let id = req.params.id
-  console.log('[PLAYLIST] /playlists/' + id + ' - Fetching playlist details')
-
+app.get("/liked-songs", async (req, res, next) => {
+  console.log('[LIKED-SONGS] /liked-songs - Fetching user\'s liked songs')
   try {
+    console.log('[LIKED-SONGS] Session data:', {
+      hasAuthToken: !!req.session.authToken,
+      hasRefreshToken: !!req.session.refreshToken,
+      userId: req.session.userId
+    })
+
     let token = await ensureValidToken(req)
 
     if (!token) {
-      console.log('[PLAYLIST] No valid token, redirecting to /auth')
+      console.log('[LIKED-SONGS] No token available, redirecting to auth')
       return res.redirect("/auth")
     }
 
-    console.log('[PLAYLIST] Fetching playlist info for ID:', id)
-    let playlist = await getPlaylistInfo(token, id)
-    console.log('[PLAYLIST] Playlist received:', playlist.name)
-    
-    console.log('[PLAYLIST] Fetching tracks for playlist:', id)
-    let tracks = await getTracks(token, id)
-    console.log('[PLAYLIST] Received', tracks.length, 'tracks')
+    let likedSongs
+    try {
+      console.log('[LIKED-SONGS] Fetching liked songs from Spotify API')
+      likedSongs = await getLikedSongs(token)
+      console.log('[LIKED-SONGS] Received', likedSongs.length, 'liked songs')
+    } catch (error) {
+      // Check for insufficient scope error
+      if (error.message.includes("Insufficient client scope")) {
+        console.log('[LIKED-SONGS] Insufficient scope - need to re-authenticate with proper scopes')
+        req.session.authToken = null
+        req.session.refreshToken = null
+        return res.redirect("/auth")
+      }
 
-    console.log('[PLAYLIST] Fetching genres for tracks from Spotify')
-    let genres = await fetchGenresForTracks(tracks, token)
-    console.log('[PLAYLIST] Genres fetched for', Object.keys(genres).length, 'tracks')
+      if (error.message.includes("Token expired or invalid") && req.session.refreshToken) {
+        console.log('[LIKED-SONGS] Token expired, attempting to refresh...')
+        try {
+          const { refreshAccessToken } = require("../utils/tokenRefresh")
+          token = await refreshAccessToken(req.session.refreshToken)
+          req.session.authToken = token
+          console.log('[LIKED-SONGS] Token refreshed, retrying request with new token')
+          likedSongs = await getLikedSongs(token)
+          console.log('[LIKED-SONGS] Received', likedSongs.length, 'liked songs after refresh')
+        } catch (refreshError) {
+          console.error('[LIKED-SONGS] Failed to refresh token:', refreshError.message)
+          req.session.authToken = null
+          req.session.refreshToken = null
+          return res.redirect("/auth")
+        }
+      } else {
+        throw error
+      }
+    }
 
-    console.log('[PLAYLIST] Adding tracks to database (background)')
-    addTracks(tracks, id, token)
+    if (req.session.userId) {
+      console.log('[LIKED-SONGS] Adding liked songs to database for user:', req.session.userId)
+      addLikedSongs(likedSongs, req.session.userId)
+    } else {
+      console.log('[LIKED-SONGS] No userId in session, skipping database insert')
+    }
 
-    console.log('[PLAYLIST] Rendering playlist page')
-    res.render("playlist.ejs", { playlist: playlist, tracks: tracks, genres: genres })
+    console.log('[LIKED-SONGS] Fetching genres for tracks from Spotify')
+    let genres = await fetchGenresForTracks(likedSongs, token)
+    console.log('[LIKED-SONGS] Genres fetched for', Object.keys(genres).length, 'tracks')
 
+    console.log('[LIKED-SONGS] Rendering liked-songs page')
+    res.render("liked-songs.ejs", { tracks: likedSongs, genres: genres })
   } catch (error) {
-    console.error('[PLAYLIST] Error in /playlists/:id route:', error.message)
+    console.error('[LIKED-SONGS] Error in /liked-songs route:', error.message)
     next(error)
   }
 })
 
-async function getPlaylistInfo(accessToken, id) {
-  console.log('[API] Calling Spotify API: GET /v1/playlists/' + id)
-  const response = await fetch(`https://api.spotify.com/v1/playlists/${id}`, {
-    headers: {
-      Authorization: "Bearer " + accessToken
-    }
-  })
-
-  if (!response.ok) {
-    console.error('[API] Failed to fetch playlist - Status:', response.status)
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(`Token expired or invalid: ${response.status}`)
-    }
-    throw new Error(`Failed to fetch playlist: ${response.status}`)
-  }
-
-  const data = await response.json()
-
-  if (!data || !data.id) {
-    console.error('[API] Invalid playlist data received')
-    throw new Error("Invalid playlist data received")
-  }
-
-  console.log('[API] Playlist info fetched successfully')
-  return data
-}
-
-
-async function getTracks(accessToken, id) {
-  console.log('[API] Calling Spotify API: GET /v1/playlists/' + id + '/tracks')
+async function getLikedSongs(accessToken) {
+  console.log('[API] Calling Spotify API: GET /v1/me/tracks')
   let tracks = []
-  let url = `https://api.spotify.com/v1/playlists/${id}/tracks?limit=50`
+  let url = "https://api.spotify.com/v1/me/tracks?limit=50"
   let page = 1
 
   while (url) {
-    console.log('[API] Fetching tracks page', page)
+    console.log('[API] Fetching liked songs page', page)
     const response = await fetch(url, {
       headers: {
         Authorization: "Bearer " + accessToken
@@ -84,27 +88,36 @@ async function getTracks(accessToken, id) {
     })
 
     if (!response.ok) {
-      console.error('[API] Failed to fetch tracks - Status:', response.status)
-      if (response.status === 401 || response.status === 403) {
+      console.error('[API] Failed to fetch liked songs - Status:', response.status)
+      const errorBody = await response.text()
+      console.error('[API] Error response body:', errorBody)
+
+      // Check for scope error FIRST - this requires re-authentication
+      if (errorBody.includes("Insufficient client scope")) {
+        throw new Error("Insufficient client scope")
+      }
+
+      // Only treat 401 as token expiry (403 without scope error is something else)
+      if (response.status === 401) {
         throw new Error(`Token expired or invalid: ${response.status}`)
       }
-      throw new Error(`Failed to fetch tracks: ${response.status}`)
+      throw new Error(`Failed to fetch liked songs: ${response.status}`)
     }
 
     const data = await response.json()
 
     if (!data || !Array.isArray(data.items)) {
-      console.error('[API] Invalid tracks data received')
-      throw new Error("Invalid tracks data received")
+      console.error('[API] Invalid liked songs data received')
+      throw new Error("Invalid liked songs data received")
     }
 
-    console.log('[API] Received', data.items.length, 'tracks on page', page)
+    console.log('[API] Received', data.items.length, 'liked songs on page', page)
     tracks = tracks.concat(data.items)
     url = data.next
     page++
   }
 
-  console.log('[API] Total tracks fetched:', tracks.length)
+  console.log('[API] Total liked songs fetched:', tracks.length)
   return tracks
 }
 
@@ -229,7 +242,5 @@ async function getTrackGenres(tracks) {
     });
   });
 }
-
-
 
 module.exports = app

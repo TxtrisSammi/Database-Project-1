@@ -7,9 +7,7 @@
   <link rel="stylesheet" type="" href="/css/style.css">
   <link rel="stylesheet" type="" href="/css/playlist.css">
   <link rel="stylesheet" type="" href="/css/loading.css">
-  <title>
-    <%= playlist.name %>
-  </title>
+  <title>Liked Songs</title>
 </head>
 
 <body class="lava">
@@ -25,30 +23,16 @@
 
     <main class="flex">
       <div class="window flex" id="playlist-header">
-        <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
-          <img width="300px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
-          <% } else { %>
-            <img width="300px" src="/media/missing.jpg" alt=":(">
-            <% } %>
-              <div class="flex" id="playlist-info">
-                <h1>
-                  <%= playlist.name %>
-                </h1>
-                <% if (playlist.description) { %>
-                  <p>
-                    <%= playlist.description %>
-                  </p>
-                  <% } %>
-                    <div class="flex" id="playlist-meta">
-                      <span>
-                        <%= playlist.owner.display_name %>
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <%= tracks.length %> tracks
-                      </span>
-                    </div>
-              </div>
+        <img width="300px" src="/media/liked-songs.jpg" alt="Liked Songs">
+        <div class="flex" id="playlist-info">
+          <h1>Liked Songs</h1>
+          <p>Your collection of favorite tracks</p>
+          <div class="flex" id="playlist-meta">
+            <span>
+              <%= tracks.length %> tracks
+            </span>
+          </div>
+        </div>
       </div>
 
       <div class="window flex" id="stats">
@@ -60,7 +44,7 @@
         <ul class="track-list">
           <% for (const item of tracks) { %>
             <% if (item.track) { %>
-              <a target="_blank" href="https://open.spotify.com/track/ <%= item.track.id %>">
+              <a target="_blank" href="https://open.spotify.com/track/<%= item.track.id %>">
                 <li class="track-item">
                   <div class="track flex">
                     <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>

@@ -102,6 +102,26 @@ a {
     text-overflow: ellipsis;
 }
 
+.genre-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+}
+
+.genre-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    text-transform: lowercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 .track-album {
     flex: 1;
     min-width: 0;

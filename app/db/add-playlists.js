@@ -1,10 +1,11 @@
 const newConnection = require('./connection');
 
 async function addPlaylists(playlists, userId) {
+  console.log('[DB] addPlaylists - Starting for', playlists.length, 'playlists (User ID:', userId + ')')
   const con = newConnection();
 
   try {
-    console.log('Connected to the database!');
+    console.log('[DB] addPlaylists - Connected to the database');
 
     for (const playlist of playlists) {
       let playlistId = playlist.id;
@@ -17,20 +18,23 @@ async function addPlaylists(playlists, userId) {
                     PlaylistName = VALUES(PlaylistName), PlaylistDescription = VALUES(PlaylistDescription)`;
 
       con.query(insert, [playlistId, playlistName, playlistDescription, userId], function (err, result) {
-        if (err) throw err;
-        console.log(`Playlist ${playlistName} inserted/updated`);
+        if (err) {
+          console.error('[DB] addPlaylists - Error inserting playlist:', playlistName, err.message)
+          throw err;
+        }
+        console.log('[DB] addPlaylists - Playlist inserted/updated:', playlistName);
       });
 
     }
 
   } catch (error) {
-    console.error('Error while interacting with the database:', error);
+    console.error('[DB] addPlaylists - Error while interacting with the database:', error.message);
   } finally {
     con.end((endErr) => {
       if (endErr) {
-        console.error('Error while closing the database connection:', endErr);
+        console.error('[DB] addPlaylists - Error while closing the database connection:', endErr.message);
       } else {
-        console.log('Connection closed gracefully.');
+        console.log('[DB] addPlaylists - Connection closed gracefully');
       }
     });
   }

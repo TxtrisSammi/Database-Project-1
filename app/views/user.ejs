@@ -6,10 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="" href="css/style.css">
   <link rel="stylesheet" type="" href="css/user.css">
+  <link rel="stylesheet" type="" href="css/loading.css">
   <title><%= user.display_name %></title>
 </head>
 
 <body class="lava">
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div style="text-align: center;">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading...</div>
+    </div>
+  </div>
+
   <%- include("./components/header") %>
 
     <main class="flex">
@@ -34,6 +43,17 @@
 
       <div class="window" id="playlists">
         <ul class="listing-list flex">
+          <li>
+            <a href="/liked-songs">
+              <div class="listing flex">
+                <img width="200px" src="/media/liked-songs.jpg" alt="Liked Songs">
+                <div>
+                  <h3>Liked Songs</h3>
+                  <p>Your favorite tracks</p>
+                </div>
+              </div>
+            </a>
+          </li>
           <% for (const playlist of playlists) { %>
             <li>
               <a href="/playlists/<%= playlist.id %>">
@@ -65,6 +85,20 @@
     </main>
 
     <%- include("./components/footer") %>
+
+    <script>
+      // Hide loading overlay on page load (in case of back button)
+      window.addEventListener('pageshow', function(event) {
+        document.getElementById('loading-overlay').classList.add('hidden');
+      });
+
+      // Show loading indicator when clicking on playlists or liked songs
+      document.querySelectorAll('.listing-list a').forEach(link => {
+        link.addEventListener('click', function(e) {
+          document.getElementById('loading-overlay').classList.remove('hidden');
+        });
+      });
+    </script>
 </body>
 
 </html>
