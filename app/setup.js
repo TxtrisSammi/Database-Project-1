@@ -91,7 +91,8 @@ async function createAll() {
       TrackId VARCHAR(255) PRIMARY KEY,
       TrackName VARCHAR(255),
       Album VARCHAR(255),
-      AlbumImageURL VARCHAR(500)
+      AlbumImageURL VARCHAR(500),
+      DurationMs INT
     );
   `;
 

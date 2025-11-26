@@ -11,6 +11,7 @@ async function getPlaylistTracks(playlistId) {
         t.TrackName,
         t.Album,
         t.AlbumImageURL,
+        t.DurationMs,
         GROUP_CONCAT(DISTINCT a.ArtistName ORDER BY a.ArtistName SEPARATOR ', ') as Artists,
         GROUP_CONCAT(DISTINCT a.ArtistId ORDER BY a.ArtistName SEPARATOR ',') as ArtistIds
       FROM PlaylistTrack pt
@@ -18,7 +19,7 @@ async function getPlaylistTracks(playlistId) {
       LEFT JOIN TrackArtist ta ON t.TrackId = ta.TrackId
       LEFT JOIN Artist a ON ta.ArtistId = a.ArtistId
       WHERE pt.PlaylistId = ?
-      GROUP BY t.TrackId, t.TrackName, t.Album, t.AlbumImageURL
+      GROUP BY t.TrackId, t.TrackName, t.Album, t.AlbumImageURL, t.DurationMs
       ORDER BY t.TrackName
     `;
     

@@ -18,15 +18,16 @@ async function addTracks(tracks, playlistId, token) {
       let albumImageURL = (item.track.album.images && item.track.album.images.length > 0) 
         ? item.track.album.images[0].url 
         : null;
+      let durationMs = item.track.duration_ms || 0;
 
       // Insert track and wait for completion
       await new Promise((resolve, reject) => {
         let insert = `
-                      INSERT INTO Track (TrackId, TrackName, Album, AlbumImageURL) VALUES (?, ?, ?, ?) 
+                      INSERT INTO Track (TrackId, TrackName, Album, AlbumImageURL, DurationMs) VALUES (?, ?, ?, ?, ?) 
                       ON DUPLICATE KEY UPDATE 
-                      TrackName = VALUES(TrackName), Album = VALUES(Album), AlbumImageURL = VALUES(AlbumImageURL)`;
+                      TrackName = VALUES(TrackName), Album = VALUES(Album), AlbumImageURL = VALUES(AlbumImageURL), DurationMs = VALUES(DurationMs)`;
 
-        con.query(insert, [trackId, trackName, album, albumImageURL], function (err, result) {
+        con.query(insert, [trackId, trackName, album, albumImageURL, durationMs], function (err, result) {
           if (err) {
             console.error('[DB] addTracks - Error inserting track:', trackName, err.message)
             reject(err);

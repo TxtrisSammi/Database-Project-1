@@ -46,7 +46,8 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
           artists: t.Artists ? t.Artists.split(', ').map((name, idx) => ({
             name: name,
             id: t.ArtistIds ? t.ArtistIds.split(',')[idx] : ''
-          })) : []
+          })) : [],
+          duration_ms: t.DurationMs || 0
         }
       }))
 
