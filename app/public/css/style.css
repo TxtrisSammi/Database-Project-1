@@ -4,9 +4,11 @@
   --bg: #121212;
   --bg-accent: #212121;
   --bg-light: #535353;
+  --bg-dark: #0a0a0a;
   --active: #1ED760;
   --inactive: #1DB954;
   --accent: #D71E95;
+  --accent-dark: #A01570;
   --border-radius: 10px;
 }
 

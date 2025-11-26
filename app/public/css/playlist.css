@@ -150,3 +150,125 @@ a {
     padding: 0;
 }
 
+#filter-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--bg-accent);
+}
+
+#filter-section h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.filter-inputs {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bg-light);
+}
+
+.filter-group input {
+    padding: 0.6rem;
+    border: 2px solid var(--bg-accent);
+    border-radius: 5px;
+    background-color: var(--bg-dark);
+    color: white;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.filter-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.filter-group input::placeholder {
+    color: var(--bg-light);
+    opacity: 0.6;
+}
+
+.clear-btn {
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: fit-content;
+}
+
+.clear-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.clear-btn:active {
+    transform: translateY(0);
+}
+
+#filter-chips {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--bg-accent);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.chip-remove:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#filter-count {
+    font-size: 1rem;
+    color: var(--bg-light);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
