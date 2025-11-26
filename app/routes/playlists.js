@@ -3,11 +3,72 @@ const app = express.Router()
 const { ensureValidToken } = require("../utils/tokenRefresh")
 const { validatePlaylistId } = require("../middleware/validateInput")
 const { addTracks } = require("../db/add-tracks")
+const { getPlaylistTracks, getTrackGenres } = require("../db/get-tracks")
+const { getPlaylists } = require("../db/get-playlists")
 
 
 app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
   let id = req.params.id
-  console.log('[PLAYLIST] /playlists/' + id + ' - Fetching playlist details')
+  console.log('[PLAYLIST] /playlists/' + id + ' - Loading playlist from database')
+
+  try {
+    // Load playlist info from database
+    const { getPlaylists } = require("../db/get-playlists")
+    const playlists = await getPlaylists(req.session.userId || '')
+    const playlistData = playlists.find(p => p.PlaylistId === id)
+    
+    let playlist = null
+    if (playlistData) {
+      playlist = {
+        id: playlistData.PlaylistId,
+        name: playlistData.PlaylistName,
+        description: playlistData.PlaylistDescription,
+        images: playlistData.ImageURL ? [{ url: playlistData.ImageURL }] : [],
+        owner: { display_name: 'You' }
+      }
+    }
+
+    // Load tracks from database
+    let dbTracks = await getPlaylistTracks(id)
+    let tracks = []
+    let genres = {}
+
+    if (dbTracks && dbTracks.length > 0) {
+      // Convert DB format to expected format
+      tracks = dbTracks.map(t => ({
+        track: {
+          id: t.TrackId,
+          name: t.TrackName,
+          album: { 
+            name: t.Album,
+            images: t.AlbumImageURL ? [{ url: t.AlbumImageURL }] : []
+          },
+          artists: t.Artists ? t.Artists.split(', ').map((name, idx) => ({
+            name: name,
+            id: t.ArtistIds ? t.ArtistIds.split(',')[idx] : ''
+          })) : []
+        }
+      }))
+
+      // Get genres
+      const trackIds = dbTracks.map(t => t.TrackId)
+      genres = await getTrackGenres(trackIds)
+    }
+
+    console.log('[PLAYLIST] Rendering playlist page with DB data')
+    console.log('[PLAYLIST] Playlist:', playlist ? playlist.name : 'No data')
+    console.log('[PLAYLIST] Tracks:', tracks.length)
+    res.render("playlist.ejs", { playlist: playlist, tracks: tracks, genres: genres })
+
+  } catch (error) {
+    console.error('[PLAYLIST] Error in /playlists/:id route:', error.message)
+    next(error)
+  }
+})
+
+app.post("/playlists/:id/refresh", validatePlaylistId, async (req, res, next) => {
+  let id = req.params.id
+  console.log('[PLAYLIST] /playlists/' + id + '/refresh - Fetching from Spotify')
 
   try {
     let token = await ensureValidToken(req)
@@ -29,14 +90,14 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
     let genres = await fetchGenresForTracks(tracks, token)
     console.log('[PLAYLIST] Genres fetched for', Object.keys(genres).length, 'tracks')
 
-    console.log('[PLAYLIST] Adding tracks to database (background)')
-    addTracks(tracks, id, token)
+    console.log('[PLAYLIST] Updating tracks in database')
+    await addTracks(tracks, id, token)
 
-    console.log('[PLAYLIST] Rendering playlist page')
-    res.render("playlist.ejs", { playlist: playlist, tracks: tracks, genres: genres })
+    console.log('[PLAYLIST] Redirecting back to playlist')
+    res.redirect('/playlists/' + id)
 
   } catch (error) {
-    console.error('[PLAYLIST] Error in /playlists/:id route:', error.message)
+    console.error('[PLAYLIST] Error in /playlists/:id/refresh route:', error.message)
     next(error)
   }
 })
@@ -188,48 +249,6 @@ async function fetchGenresForTracks(tracks, token) {
   
   return trackGenreMap
 }
-
-async function getTrackGenres(tracks) {
-  const newConnection = require('../db/connection');
-  const con = newConnection();
-  
-  return new Promise((resolve, reject) => {
-    // Get all track IDs
-    const trackIds = tracks
-      .filter(item => item.track && item.track.id)
-      .map(item => item.track.id);
-    
-    if (trackIds.length === 0) {
-      resolve({});
-      return;
-    }
-    
-    console.log('[DB] Fetching genres for', trackIds.length, 'tracks');
-    
-    // Query to get genres for all tracks
-    const query = `SELECT TrackId, TrackGenre FROM ArtistGenre WHERE TrackId IN (${trackIds.map(() => '?').join(',')})`;
-    
-    con.query(query, trackIds, function(err, results) {
-      con.end();
-      
-      if (err) {
-        console.error('[DB] Error fetching genres:', err.message);
-        resolve({}); // Return empty object on error, don't fail the whole request
-        return;
-      }
-      
-      // Convert results to map: { trackId: "genre1, genre2, ..." }
-      const genreMap = {};
-      results.forEach(row => {
-        genreMap[row.TrackId] = row.TrackGenre;
-      });
-      
-      console.log('[DB] Genres loaded for', results.length, 'tracks');
-      resolve(genreMap);
-    });
-  });
-}
-
 
 
 module.exports = app

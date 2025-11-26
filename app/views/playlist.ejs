@@ -8,7 +8,7 @@
   <link rel="stylesheet" type="" href="/css/playlist.css">
   <link rel="stylesheet" type="" href="/css/loading.css">
   <title>
-    <%= playlist.name %>
+    <%= playlist ? playlist.name : 'Playlist' %>
   </title>
 </head>
 
@@ -24,6 +24,7 @@
   <%- include("./components/header") %>
 
     <main class="flex">
+      <% if (playlist) { %>
       <div class="window flex" id="playlist-header">
         <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
           <img width="300px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
@@ -50,12 +51,33 @@
                     </div>
               </div>
       </div>
+      <% } else { %>
+      <div class="window flex" id="playlist-header">
+        <img width="300px" src="/media/missing.jpg" alt="No playlist">
+        <div class="flex" id="playlist-info">
+          <h1>No Playlist Data</h1>
+          <p>Click refresh to load this playlist</p>
+        </div>
+      </div>
+      <% } %>
 
       <div class="window flex" id="stats">
         <h2>Stats go here</h2>
       </div>
 
       <div class="window" id="tracks">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2>Tracks</h2>
+          <form method="POST" action="/playlists/<%= playlist ? playlist.id : '' %>/refresh" style="margin: 0;" onsubmit="showLoadingOverlay()">
+            <button type="submit" class="refresh-btn">Refresh from Spotify</button>
+          </form>
+        </div>
+
+        <% if (!tracks || tracks.length === 0) { %>
+          <div class="empty-state">
+            <p>No tracks loaded. Click "Refresh from Spotify" to load tracks.</p>
+          </div>
+        <% } else { %>
         <div id="filter-section">
           <h2>Filters</h2>
           <div class="filter-inputs">
@@ -89,7 +111,7 @@
                 <li class="track-item">
                   <div class="track flex">
                     <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
-                      <img width="64px" height="64px" src="<%= item.track.album.images[2].url %>"
+                      <img width="64px" height="64px" src="<%= item.track.album.images[0].url %>"
                         alt="<%= item.track.name %>">
                       <% } else { %>
                         <img width="64px" height="64px" src="/media/missing.jpg" alt=":(">
@@ -101,9 +123,9 @@
                             <p>
                               <%= item.track.artists.map(a=> a.name).join(", ") %>
                             </p>
-                            <% const trackGenres=genres[item.track.id]; if (trackGenres) { %>
+                            <% const trackGenres=genres[item.track.id]; if (trackGenres && trackGenres.trim()) { %>
                               <div class="genre-tags">
-                                <% trackGenres.split(", ").slice(0, 3).forEach(genre=> { %>
+                                <% trackGenres.split(", ").filter(g => g.trim()).slice(0, 3).forEach(genre=> { %>
                                   <span class="genre-tag">
                                     <%= genre %>
                                   </span>
@@ -130,6 +152,7 @@
               <% } %>
                 <% } %>
         </ul>
+        <% } %>
       </div>
 
     </main>
@@ -141,6 +164,11 @@
       window.addEventListener('pageshow', function(event) {
         document.getElementById('loading-overlay').classList.add('hidden');
       });
+
+      // Show loading overlay function
+      function showLoadingOverlay() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+      }
 
       // Filtering functionality
       const tracks = <%- JSON.stringify(tracks) %>;

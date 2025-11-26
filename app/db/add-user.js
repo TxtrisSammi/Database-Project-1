@@ -1,33 +1,44 @@
 const newConnection = require('./connection');
 
-async function addUser(id, name) {
-  console.log('[DB] addUser - Starting for user:', name, '(ID:', id + ')')
+async function addUser(userData) {
+  const { id, display_name, images, product } = userData;
+  const imageUrl = (images && images.length > 0) ? images[0].url : null;
+  
+  console.log('[DB] addUser - Starting for user:', display_name, '(ID:', id + ')')
   const con = newConnection();
 
-  try {
-    con.connect();
-    console.log('[DB] addUser - Connected to the database');
-
-    let insert = `INSERT INTO User (UserId, UserName) VALUES (?, ?) ON DUPLICATE KEY UPDATE UserName = VALUES(UserName)`;
-
-    con.query(insert, [id, name], function (err, result) {
+  return new Promise((resolve, reject) => {
+    con.connect((err) => {
       if (err) {
-        console.error('[DB] addUser - Error inserting user:', err.message)
-        throw err;
+        console.error('[DB] addUser - Connection error:', err.message);
+        reject(err);
+        return;
       }
-      console.log('[DB] addUser - User record inserted/updated for:', name);
+      
+      console.log('[DB] addUser - Connected to the database');
+
+      let insert = `
+        INSERT INTO User (UserId, UserName, ImageURL, Product) 
+        VALUES (?, ?, ?, ?) 
+        ON DUPLICATE KEY UPDATE 
+          UserName = VALUES(UserName),
+          ImageURL = VALUES(ImageURL),
+          Product = VALUES(Product)
+      `;
+
+      con.query(insert, [id, display_name, imageUrl, product], function (err, result) {
+        con.end();
+        
+        if (err) {
+          console.error('[DB] addUser - Error inserting user:', err.message)
+          reject(err);
+        } else {
+          console.log('[DB] addUser - User record inserted/updated for:', display_name);
+          resolve(result);
+        }
+      });
     });
-  } catch (error) {
-    console.error('[DB] addUser - Error while interacting with the database:', error.message);
-  } finally {
-    con.end((endErr) => {
-      if (endErr) {
-        console.error('[DB] addUser - Error while closing the database connection:', endErr.message);
-      } else {
-        console.log('[DB] addUser - Connection closed gracefully');
-      }
-    });
-  }
+  });
 }
 
 module.exports = { addUser };

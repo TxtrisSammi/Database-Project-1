@@ -3,10 +3,58 @@ const app = express.Router()
 const { ensureValidToken } = require("../utils/tokenRefresh")
 const { addUser } = require("../db/add-user")
 const { addPlaylists } = require("../db/add-playlists")
+const { getUser } = require("../db/get-user")
+const { getPlaylists } = require("../db/get-playlists")
 
 
 app.get("/user", async (req, res, next) => {
-  console.log('[USER] /user - Fetching user profile and playlists')
+  console.log('[USER] /user - Loading user profile from database')
+  try {
+    if (!req.session.userId) {
+      console.log('[USER] No userId in session, redirecting to /auth')
+      return res.redirect("/auth")
+    }
+
+    // Load from database
+    let user = await getUser(req.session.userId)
+    let playlists = await getPlaylists(req.session.userId)
+    
+    // Convert DB format to expected format
+    if (user) {
+      user = {
+        id: user.UserId,
+        display_name: user.Username,
+        images: user.ImageURL ? [{ url: user.ImageURL }] : [],
+        product: user.Product || 'free'
+      }
+    } else {
+      // No user data in DB, set to null to trigger empty state
+      user = null
+    }
+    
+    if (playlists && playlists.length > 0) {
+      playlists = playlists.map(p => ({
+        id: p.PlaylistId,
+        name: p.PlaylistName,
+        description: p.PlaylistDescription,
+        images: p.ImageURL ? [{ url: p.ImageURL }] : []
+      }))
+    } else {
+      playlists = []
+    }
+
+    console.log('[USER] Rendering user page with DB data')
+    console.log('[USER] User:', user ? user.display_name : 'No data')
+    console.log('[USER] Playlists:', playlists.length)
+    res.render("user.ejs", { user: user, playlists: playlists })
+  } catch (error) {
+    console.error('[USER] Error in /user route:', error.message)
+    next(error)
+  }
+})
+
+app.post("/user/refresh", async (req, res, next) => {
+  console.log('[USER] /user/refresh - Fetching fresh data from Spotify')
   try {
     let token = await ensureValidToken(req)
 
@@ -20,19 +68,21 @@ app.get("/user", async (req, res, next) => {
     console.log('[USER] User profile received:', user.display_name, '(ID:', user.id + ')')
     
     console.log('[USER] Fetching user playlists from Spotify API')
-    let playlists = await getPlaylists(token, user.id)
+    let playlists = await getPlaylists_Spotify(token, user.id)
     console.log('[USER] Received', playlists.length, 'playlists')
 
-    console.log('[USER] Adding user to database')
-    addUser(user.id, user.display_name)
+    console.log('[USER] Updating user in database')
+    await addUser(user)
     
-    console.log('[USER] Adding playlists to database')
+    console.log('[USER] Updating playlists in database')
     addPlaylists(playlists, user.id)
 
-    console.log('[USER] Rendering user page')
-    res.render("user.ejs", { user: user, playlists: playlists })
+    req.session.userId = user.id
+
+    console.log('[USER] Redirecting back to /user')
+    res.redirect('/user')
   } catch (error) {
-    console.error('[USER] Error in /user route:', error.message)
+    console.error('[USER] Error in /user/refresh route:', error.message)
     next(error)
   }
 })
@@ -66,7 +116,7 @@ async function getProfile(accessToken) {
   return data
 }
 
-async function getPlaylists(accessToken, userId) {
+async function getPlaylists_Spotify(accessToken, userId) {
   console.log('[API] Calling Spotify API: GET /v1/me/playlists')
   let playlists = []
   let url = "https://api.spotify.com/v1/me/playlists?limit=50"

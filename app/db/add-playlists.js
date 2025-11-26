@@ -11,13 +11,16 @@ async function addPlaylists(playlists, userId) {
       let playlistId = playlist.id;
       let playlistName = playlist.name;
       let playlistDescription = playlist.description;
+      let imageUrl = (playlist.images && playlist.images.length > 0) ? playlist.images[0].url : null;
 
       let insert = `
-                    INSERT INTO Playlist (PlaylistId, PlaylistName, PlaylistDescription, UserId) VALUES (?, ?, ?, ?) 
+                    INSERT INTO Playlist (PlaylistId, PlaylistName, PlaylistDescription, ImageURL, UserId) VALUES (?, ?, ?, ?, ?) 
                     ON DUPLICATE KEY UPDATE 
-                    PlaylistName = VALUES(PlaylistName), PlaylistDescription = VALUES(PlaylistDescription)`;
+                    PlaylistName = VALUES(PlaylistName), 
+                    PlaylistDescription = VALUES(PlaylistDescription),
+                    ImageURL = VALUES(ImageURL)`;
 
-      con.query(insert, [playlistId, playlistName, playlistDescription, userId], function (err, result) {
+      con.query(insert, [playlistId, playlistName, playlistDescription, imageUrl, userId], function (err, result) {
         if (err) {
           console.error('[DB] addPlaylists - Error inserting playlist:', playlistName, err.message)
           throw err;

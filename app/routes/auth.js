@@ -74,6 +74,27 @@ app.get("/callback", async (req, res) => {
   if (refreshToken) {
     req.session.refreshToken = refreshToken
   }
+  
+  // Fetch user ID and store in session
+  try {
+    console.log('[AUTH] Fetching user ID from Spotify')
+    const userResponse = await fetch("https://api.spotify.com/v1/me", {
+      headers: {
+        Authorization: "Bearer " + accessToken
+      }
+    })
+    
+    if (userResponse.ok) {
+      const userData = await userResponse.json()
+      if (userData && userData.id) {
+        req.session.userId = userData.id
+        console.log('[AUTH] User ID stored in session:', userData.id)
+      }
+    }
+  } catch (error) {
+    console.error('[AUTH] Failed to fetch user ID:', error.message)
+  }
+  
   console.log('[AUTH] Tokens stored in session, redirecting to /user')
   res.redirect("/user")
 });

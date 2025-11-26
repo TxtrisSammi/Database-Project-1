@@ -7,7 +7,7 @@
   <link rel="stylesheet" type="" href="css/style.css">
   <link rel="stylesheet" type="" href="css/user.css">
   <link rel="stylesheet" type="" href="css/loading.css">
-  <title><%= user.display_name %></title>
+  <title><%= user ? user.display_name : 'User Profile' %></title>
 </head>
 
 <body class="lava">
@@ -23,8 +23,13 @@
 
     <main class="flex">
 
+      <% if (user) { %>
       <div class="window flex" id="profile">
-        <img width="200px" src="<%= user.images[0].url %>" alt="Profile">
+        <% if (user.images && user.images.length> 0) { %>
+          <img width="200px" src="<%= user.images[0].url %>" alt="Profile">
+        <% } else { %>
+          <img width="200px" src="/media/missing.jpg" alt="No profile image">
+        <% } %>
         <div class="flex" id="user-info">
           <h1>
             <%=user.display_name%>
@@ -36,12 +41,33 @@
               <% } %>
         </div>
       </div>
+      <% } else { %>
+      <div class="window flex" id="profile">
+        <img width="200px" src="/media/missing.jpg" alt="No profile">
+        <div class="flex" id="user-info">
+          <h1>No User Data</h1>
+          <p>Click refresh to load your profile</p>
+        </div>
+      </div>
+      <% } %>
 
       <div class="flex window" id="stats">
         <h2>Stats go here</h2>
       </div>
 
       <div class="window" id="playlists">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2>Your Playlists</h2>
+          <form method="POST" action="/user/refresh" style="margin: 0;" onsubmit="showLoadingOverlay()">
+            <button type="submit" class="refresh-btn">Refresh from Spotify</button>
+          </form>
+        </div>
+        
+        <% if (!playlists || playlists.length === 0) { %>
+          <div class="empty-state">
+            <p>No playlists loaded. Click "Refresh from Spotify" to load your playlists.</p>
+          </div>
+        <% } else { %>
         <ul class="listing-list flex">
           <li>
             <a href="/liked-songs">
@@ -76,6 +102,7 @@
             </li>
             <% } %>
         </ul>
+        <% } %>
         <div class="window" id="missing-playlists">
           <h3>Missing playlists?</h3>
           <p>You may need to add them to your profile through the spotify player.</p>
@@ -92,10 +119,15 @@
         document.getElementById('loading-overlay').classList.add('hidden');
       });
 
+      // Show loading overlay function
+      function showLoadingOverlay() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+      }
+
       // Show loading indicator when clicking on playlists or liked songs
       document.querySelectorAll('.listing-list a').forEach(link => {
         link.addEventListener('click', function(e) {
-          document.getElementById('loading-overlay').classList.remove('hidden');
+          showLoadingOverlay();
         });
       });
     </script>

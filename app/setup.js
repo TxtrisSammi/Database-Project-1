@@ -79,7 +79,10 @@ async function createAll() {
   const createUser = `
     CREATE TABLE IF NOT EXISTS User (
       UserId VARCHAR(255) PRIMARY KEY,
-      Username VARCHAR(255)
+      Username VARCHAR(255),
+      ImageURL VARCHAR(500),
+      Product VARCHAR(50),
+      LastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
   `;
 
@@ -87,7 +90,8 @@ async function createAll() {
     CREATE TABLE IF NOT EXISTS Track (
       TrackId VARCHAR(255) PRIMARY KEY,
       TrackName VARCHAR(255),
-      Album VARCHAR(255)
+      Album VARCHAR(255),
+      AlbumImageURL VARCHAR(500)
     );
   `;
 
@@ -135,7 +139,9 @@ async function createAll() {
       PlaylistId VARCHAR(255) PRIMARY KEY,
       PlaylistName VARCHAR(255),
       PlaylistDescription VARCHAR(1000),
+      ImageURL VARCHAR(500),
       UserId VARCHAR(255),
+      LastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (UserId) REFERENCES User(UserId)
         ON UPDATE CASCADE ON DELETE CASCADE
     );

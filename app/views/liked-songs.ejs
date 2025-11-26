@@ -40,6 +40,18 @@
       </div>
 
       <div class="window" id="tracks">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2>Tracks</h2>
+          <form method="POST" action="/liked-songs/refresh" style="margin: 0;" onsubmit="showLoadingOverlay()">
+            <button type="submit" class="refresh-btn">Refresh from Spotify</button>
+          </form>
+        </div>
+
+        <% if (!tracks || tracks.length === 0) { %>
+          <div class="empty-state">
+            <p>No liked songs loaded. Click "Refresh from Spotify" to load your liked songs.</p>
+          </div>
+        <% } else { %>
         <div id="filter-section">
           <h2>Filters</h2>
           <div class="filter-inputs">
@@ -73,7 +85,7 @@
                 <li class="track-item">
                   <div class="track flex">
                     <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
-                      <img width="64px" height="64px" src="<%= item.track.album.images[2].url %>"
+                      <img width="64px" height="64px" src="<%= item.track.album.images[0].url %>"
                         alt="<%= item.track.name %>">
                       <% } else { %>
                         <img width="64px" height="64px" src="/media/missing.jpg" alt=":(">
@@ -85,9 +97,9 @@
                             <p>
                               <%= item.track.artists.map(a=> a.name).join(", ") %>
                             </p>
-                            <% const trackGenres=genres[item.track.id]; if (trackGenres) { %>
+                            <% const trackGenres=genres[item.track.id]; if (trackGenres && trackGenres.trim()) { %>
                               <div class="genre-tags">
-                                <% trackGenres.split(", ").slice(0, 3).forEach(genre=> { %>
+                                <% trackGenres.split(", ").filter(g => g.trim()).slice(0, 3).forEach(genre=> { %>
                                   <span class="genre-tag">
                                     <%= genre %>
                                   </span>
@@ -114,6 +126,7 @@
               <% } %>
                 <% } %>
         </ul>
+        <% } %>
       </div>
 
     </main>
@@ -125,6 +138,11 @@
       window.addEventListener('pageshow', function(event) {
         document.getElementById('loading-overlay').classList.add('hidden');
       });
+
+      // Show loading overlay function
+      function showLoadingOverlay() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+      }
 
       // Filtering functionality
       const tracks = <%- JSON.stringify(tracks) %>;
