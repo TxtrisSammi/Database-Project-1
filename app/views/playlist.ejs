@@ -18,6 +18,7 @@
     <div style="text-align: center;">
       <div class="loading-spinner"></div>
       <div class="loading-text">Loading...</div>
+      <div class="loading-warning">If this is a large playlist, this may take a while. Please be patient.</div>
     </div>
   </div>
 
@@ -107,7 +108,7 @@
         <ul class="track-list">
           <% for (const item of tracks) { %>
             <% if (item.track) { %>
-              <a target="_blank" href="https://open.spotify.com/track/ <%= item.track.id %>">
+              <!-- <a target="_blank" href="https://open.spotify.com/track/ <%= item.track.id %>"> -->
                 <li class="track-item">
                   <div class="track flex">
                     <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
@@ -123,15 +124,33 @@
                             <p>
                               <%= item.track.artists.map(a=> a.name).join(", ") %>
                             </p>
-                            <% const trackGenres=genres[item.track.id]; if (trackGenres && trackGenres.trim()) { %>
-                              <div class="genre-tags">
-                                <% trackGenres.split(", ").filter(g => g.trim()).slice(0, 3).forEach(genre=> { %>
-                                  <span class="genre-tag">
-                                    <%= genre %>
-                                  </span>
-                                  <% }); %>
+                            <div class="genre-container" data-track-id="<%= item.track.id %>">
+                              <% const trackGenres=genres[item.track.id]; %>
+                              <div class="genre-display">
+                                <% if (trackGenres && trackGenres.trim()) { %>
+                                  <div class="genre-tags">
+                                    <% trackGenres.split(", ").filter(g => g.trim()).forEach(genre=> { %>
+                                      <span class="genre-tag" data-genre="<%= genre %>">
+                                        <%= genre %>
+                                      </span>
+                                      <% }); %>
+                                  </div>
+                                <% } else { %>
+                                  <div class="genre-tags">
+                                    <span class="no-genres">No genres</span>
+                                  </div>
+                                <% } %>
+                                <button class="edit-genres-btn" onclick="editGenres(event, '<%= item.track.id %>')">Edit</button>
                               </div>
-                              <% } %>
+                              <div class="genre-edit hidden">
+                                <div class="genre-tags-editable"></div>
+                                <input type="text" class="genre-input" placeholder="Add genre..." onkeypress="handleGenreInput(event, '<%= item.track.id %>')">
+                                <div class="genre-actions">
+                                  <button class="save-btn" onclick="saveGenres(event, '<%= item.track.id %>')">Save</button>
+                                  <button class="cancel-btn" onclick="cancelEdit(event, '<%= item.track.id %>')">Cancel</button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <div class="track-album">
                             <p>
@@ -148,7 +167,7 @@
                           </div>
                   </div>
                 </li>
-              </a>
+              <!-- </a> -->
               <% } %>
                 <% } %>
         </ul>
@@ -354,6 +373,149 @@
 
       // Initialize
       filterTracks();
+
+      // Genre editing functions
+      function editGenres(event, trackId) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const container = document.querySelector(`.genre-container[data-track-id="${trackId}"]`);
+        const display = container.querySelector('.genre-display');
+        const edit = container.querySelector('.genre-edit');
+        
+        // Get current genres
+        const currentGenres = [];
+        container.querySelectorAll('.genre-tag[data-genre]').forEach(tag => {
+          currentGenres.push(tag.dataset.genre);
+        });
+        
+        // Populate editable tags
+        const editableContainer = edit.querySelector('.genre-tags-editable');
+        editableContainer.innerHTML = '';
+        currentGenres.forEach(genre => {
+          const tag = document.createElement('span');
+          tag.className = 'genre-tag-edit';
+          tag.innerHTML = `${genre} <button onclick="removeGenreTag(event, '${trackId}', '${genre}')">×</button>`;
+          editableContainer.appendChild(tag);
+        });
+        
+        // Show edit mode
+        display.classList.add('hidden');
+        edit.classList.remove('hidden');
+      }
+
+      function cancelEdit(event, trackId) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const container = document.querySelector(`.genre-container[data-track-id="${trackId}"]`);
+        const display = container.querySelector('.genre-display');
+        const edit = container.querySelector('.genre-edit');
+        
+        edit.classList.add('hidden');
+        display.classList.remove('hidden');
+        edit.querySelector('.genre-input').value = '';
+      }
+
+      function removeGenreTag(event, trackId, genre) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.target.parentElement.remove();
+      }
+
+      function handleGenreInput(event, trackId) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const input = event.target;
+          const genre = input.value.trim();
+          
+          if (genre) {
+            const container = document.querySelector(`.genre-container[data-track-id="${trackId}"]`);
+            const editableContainer = container.querySelector('.genre-tags-editable');
+            
+            // Check if genre already exists
+            const exists = Array.from(editableContainer.querySelectorAll('.genre-tag-edit')).some(tag => 
+              tag.textContent.includes(genre)
+            );
+            
+            if (!exists) {
+              const tag = document.createElement('span');
+              tag.className = 'genre-tag-edit';
+              tag.innerHTML = `${genre} <button onclick="removeGenreTag(event, '${trackId}', '${genre}')">×</button>`;
+              editableContainer.appendChild(tag);
+            }
+            
+            input.value = '';
+          }
+        }
+      }
+
+      async function saveGenres(event, trackId) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const container = document.querySelector(`.genre-container[data-track-id="${trackId}"]`);
+        const editableContainer = container.querySelector('.genre-tags-editable');
+        
+        // Get new genres list
+        const newGenres = [];
+        editableContainer.querySelectorAll('.genre-tag-edit').forEach(tag => {
+          const genre = tag.textContent.replace('×', '').trim();
+          newGenres.push(genre);
+        });
+        
+        // Get original genres
+        const originalGenres = genres[trackId] ? genres[trackId].split(', ').filter(g => g.trim()) : [];
+        
+        // Find genres to add and remove
+        const toAdd = newGenres.filter(g => !originalGenres.includes(g));
+        const toRemove = originalGenres.filter(g => !newGenres.includes(g));
+        
+        try {
+          // Remove genres
+          for (const genre of toRemove) {
+            await fetch(`/api/tracks/${trackId}/genres/${encodeURIComponent(genre)}`, {
+              method: 'DELETE'
+            });
+          }
+          
+          // Add genres
+          for (const genre of toAdd) {
+            await fetch(`/api/tracks/${trackId}/genres`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ genre })
+            });
+          }
+          
+          // Update local genres object
+          genres[trackId] = newGenres.join(', ');
+          
+          // Update display
+          const display = container.querySelector('.genre-display');
+          const genreTags = display.querySelector('.genre-tags');
+          genreTags.innerHTML = '';
+          
+          if (newGenres.length > 0) {
+            newGenres.forEach(genre => {
+              const tag = document.createElement('span');
+              tag.className = 'genre-tag';
+              tag.dataset.genre = genre;
+              tag.textContent = genre;
+              genreTags.appendChild(tag);
+            });
+          } else {
+            genreTags.innerHTML = '<span class="no-genres">No genres</span>';
+          }
+          
+          // Hide edit mode
+          cancelEdit(event, trackId);
+          
+        } catch (error) {
+          console.error('Failed to save genres:', error);
+          alert('Failed to save genres. Please try again.');
+        }
+      }
     </script>
 </body>
 

@@ -12,6 +12,8 @@ const port = 8080;
 app.set('view engine', 'ejs'); // set view engine
 app.set('views', path.join(__dirname, 'views')); // pass views
 app.use(express.static(path.join(__dirname, 'public'))); // pass public
+app.use(express.json()); // parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // parse URL-encoded bodies
 
 // session setup
 app.use(session({
@@ -37,6 +39,7 @@ const authRoutes = require("./routes/auth")
 const userRoutes = require("./routes/user")
 const playRoutes = require("./routes/playlists")
 const likedSongsRoutes = require("./routes/liked-songs")
+const apiRoutes = require("./routes/api")
 const errorHandler = require("./middleware/errorHandler")
 
 // landing page
@@ -50,6 +53,7 @@ app.use("/", authRoutes)
 app.use("/", userRoutes)
 app.use("/", playRoutes)
 app.use("/", likedSongsRoutes)
+app.use("/", apiRoutes)
 
 // error handling middleware (must be last)
 app.use(errorHandler)
