@@ -102,6 +102,26 @@ a {
     text-overflow: ellipsis;
 }
 
+.genre-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+}
+
+.genre-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    text-transform: lowercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 .track-album {
     flex: 1;
     min-width: 0;
@@ -130,3 +150,302 @@ a {
     padding: 0;
 }
 
+#filter-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--bg-accent);
+}
+
+#filter-section h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.filter-inputs {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bg-light);
+}
+
+.filter-group input {
+    padding: 0.6rem;
+    border: 2px solid var(--bg-accent);
+    border-radius: 5px;
+    background-color: var(--bg-dark);
+    color: white;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.filter-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.filter-group input::placeholder {
+    color: var(--bg-light);
+    opacity: 0.6;
+}
+
+.clear-btn {
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: fit-content;
+}
+
+.clear-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.clear-btn:active {
+    transform: translateY(0);
+}
+
+#filter-chips {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--bg-accent);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.chip-remove {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.chip-remove:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#filter-count {
+    font-size: 1rem;
+    color: var(--bg-light);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+
+
+.refresh-btn {
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, var(--active), var(--inactive));
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.refresh-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.refresh-btn:active {
+  transform: translateY(0);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--bg-light);
+  font-size: 1.2rem;
+}
+
+/* Genre editing styles */
+.genre-container {
+  position: relative;
+}
+
+.genre-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-genres-btn {
+  background: var(--inactive);
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  color: var(--text);
+  font-weight: 600;
+  opacity: 0.8;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.edit-genres-btn:hover {
+  opacity: 1;
+  background: var(--active);
+  color: white;
+}
+
+.genre-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.genre-tags-editable {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.genre-tag-edit {
+  background-color: var(--inactive);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.genre-tag-edit button {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.genre-tag-edit button:hover {
+  color: #ff4444;
+}
+
+.genre-input {
+  padding: 0.5rem;
+  border: 1px solid var(--inactive);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.genre-input:focus {
+  outline: none;
+  border-color: var(--active);
+}
+
+.genre-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.save-btn, .cancel-btn {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.save-btn {
+  background: var(--active);
+  color: white;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
+}
+
+.cancel-btn {
+  background: var(--inactive);
+  color: var(--text);
+}
+
+.cancel-btn:hover {
+  opacity: 0.8;
+}
+
+.no-genres {
+  color: var(--bg-light);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* Track actions (remove button) */
+.track-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 1rem;
+}
+
+.remove-track-btn {
+  background: #dc3545;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  opacity: 0.8;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.remove-track-btn:hover {
+  opacity: 1;
+  background: #c82333;
+}

@@ -7,9 +7,7 @@
   <link rel="stylesheet" type="" href="/css/style.css">
   <link rel="stylesheet" type="" href="/css/playlist.css">
   <link rel="stylesheet" type="" href="/css/loading.css">
-  <title>
-    <%= playlist ? playlist.name : 'Playlist' %>
-  </title>
+  <title>Liked Songs</title>
 </head>
 
 <body class="lava">
@@ -25,42 +23,18 @@
   <%- include("./components/header") %>
 
     <main class="flex">
-      <% if (playlist) { %>
       <div class="window flex" id="playlist-header">
-        <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
-          <img width="300px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
-          <% } else { %>
-            <img width="300px" src="/media/missing.jpg" alt=":(">
-            <% } %>
-              <div class="flex" id="playlist-info">
-                <h1>
-                  <%= playlist.name %>
-                </h1>
-                <% if (playlist.description) { %>
-                  <p>
-                    <%= playlist.description %>
-                  </p>
-                  <% } %>
-                    <div class="flex" id="playlist-meta">
-                      <span>
-                        <%= playlist.owner.display_name %>
-                      </span>
-                      <span>•</span>
-                      <span>
-                        <%= tracks.length %> tracks
-                      </span>
-                    </div>
-              </div>
-      </div>
-      <% } else { %>
-      <div class="window flex" id="playlist-header">
-        <img width="300px" src="/media/missing.jpg" alt="No playlist">
+        <img width="300px" src="/media/liked.png" alt="Liked Songs">
         <div class="flex" id="playlist-info">
-          <h1>No Playlist Data</h1>
-          <p>Click refresh to load this playlist</p>
+          <h1>Liked Songs</h1>
+          <p>Your collection of favorite tracks</p>
+          <div class="flex" id="playlist-meta">
+            <span>
+              <%= tracks.length %> tracks
+            </span>
+          </div>
         </div>
       </div>
-      <% } %>
 
       <div class="window flex" id="stats">
         <h2>Stats go here</h2>
@@ -69,14 +43,14 @@
       <div class="window" id="tracks">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h2>Tracks</h2>
-          <form method="POST" action="/playlists/<%= playlist ? playlist.id : '' %>/refresh" style="margin: 0;" onsubmit="showLoadingOverlay()">
+          <form method="POST" action="/liked-songs/refresh" style="margin: 0;" onsubmit="showLoadingOverlay()">
             <button type="submit" class="refresh-btn">Refresh from Spotify</button>
           </form>
         </div>
 
         <% if (!tracks || tracks.length === 0) { %>
           <div class="empty-state">
-            <p>No tracks loaded. Click "Refresh from Spotify" to load tracks.</p>
+            <p>No liked songs loaded. Click "Refresh from Spotify" to load your liked songs.</p>
           </div>
         <% } else { %>
         <div id="filter-section">
@@ -108,7 +82,7 @@
         <ul class="track-list">
           <% for (const item of tracks) { %>
             <% if (item.track) { %>
-              <!-- <a target="_blank" href="https://open.spotify.com/track/ <%= item.track.id %>"> -->
+              <!-- <a target="_blank" href="https://open.spotify.com/track/<%= item.track.id %>"> -->
                 <li class="track-item">
                   <div class="track flex">
                     <% if (item.track.album && item.track.album.images && item.track.album.images.length> 0) { %>
@@ -165,9 +139,6 @@
                                 <%= formatted %>
                               </span>
                           </div>
-                          <div class="track-actions">
-                            <button class="remove-track-btn" onclick="removeTrack(event, '<%= playlist ? playlist.id : '' %>', '<%= item.track.id %>', '<%= item.track.name %>')">Remove</button>
-                          </div>
                   </div>
                 </li>
               <!-- </a> -->
@@ -200,7 +171,7 @@
         artists: [],
         albums: [],
         genres: [],
-        trackName: ''
+        trackName: []
       };
 
       function parseFilterInput(input) {
@@ -517,48 +488,6 @@
         } catch (error) {
           console.error('Failed to save genres:', error);
           alert('Failed to save genres. Please try again.');
-        }
-      }
-
-      // Track removal function
-      async function removeTrack(event, playlistId, trackId, trackName) {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        if (!confirm(`Remove "${trackName}" from this playlist?`)) {
-          return;
-        }
-        
-        try {
-          const response = await fetch(`/api/playlists/${playlistId}/tracks/${trackId}`, {
-            method: 'DELETE'
-          });
-          
-          if (response.ok) {
-            // Remove track from UI
-            const trackItem = event.target.closest('.track-item');
-            trackItem.style.opacity = '0.5';
-            trackItem.style.transition = 'opacity 0.3s';
-            
-            setTimeout(() => {
-              trackItem.remove();
-              
-              // Update track count
-              const trackList = document.querySelector('.track-list');
-              const remainingTracks = trackList.querySelectorAll('.track-item').length;
-              
-              // Update count display if exists
-              const countElement = document.querySelector('#filter-count');
-              if (countElement) {
-                countElement.textContent = `Showing ${remainingTracks} of ${remainingTracks} tracks`;
-              }
-            }, 300);
-          } else {
-            alert('Failed to remove track. Please try again.');
-          }
-        } catch (error) {
-          console.error('Failed to remove track:', error);
-          alert('Failed to remove track. Please try again.');
         }
       }
     </script>

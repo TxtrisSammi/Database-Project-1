@@ -6,16 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="" href="css/style.css">
   <link rel="stylesheet" type="" href="css/user.css">
-  <title><%= user.display_name %></title>
+  <link rel="stylesheet" type="" href="css/loading.css">
+  <title><%= user ? user.display_name : 'User Profile' %></title>
 </head>
 
 <body class="lava">
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div style="text-align: center;">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading...</div>
+      <div class="loading-warning">If this is a large playlist, this may take a while. Please be patient.</div>
+    </div>
+  </div>
+
   <%- include("./components/header") %>
 
     <main class="flex">
 
+      <% if (user) { %>
       <div class="window flex" id="profile">
-        <img width="200px" src="<%= user.images[0].url %>" alt="Profile">
+        <% if (user.images && user.images.length> 0) { %>
+          <img width="200px" src="<%= user.images[0].url %>" alt="Profile">
+        <% } else { %>
+          <img width="200px" src="/media/missing.jpg" alt="No profile image">
+        <% } %>
         <div class="flex" id="user-info">
           <h1>
             <%=user.display_name%>
@@ -27,44 +42,131 @@
               <% } %>
         </div>
       </div>
+      <% } else { %>
+      <div class="window flex" id="profile">
+        <img width="200px" src="/media/missing.jpg" alt="No profile">
+        <div class="flex" id="user-info">
+          <h1>No User Data</h1>
+          <p>Click refresh to load your profile</p>
+        </div>
+      </div>
+      <% } %>
 
       <div class="flex window" id="stats">
         <h2>Stats go here</h2>
       </div>
 
       <div class="window" id="playlists">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2>Your Playlists</h2>
+          <form method="POST" action="/user/refresh" style="margin: 0;" onsubmit="showLoadingOverlay()">
+            <button type="submit" class="refresh-btn">Refresh from Spotify</button>
+          </form>
+        </div>
+        
+        <% if (!playlists || playlists.length === 0) { %>
+          <div class="empty-state">
+            <p>No playlists loaded. Click "Refresh from Spotify" to load your playlists.</p>
+          </div>
+        <% } else { %>
         <ul class="listing-list flex">
+          <li>
+            <a href="/liked-songs">
+              <div class="listing flex">
+                <img width="200px" src="/media/liked.png" alt="Liked Songs">
+                <div>
+                  <h3>Liked Songs</h3>
+                  <p>Your favorite tracks</p>
+                </div>
+              </div>
+            </a>
+          </li>
           <% for (const playlist of playlists) { %>
             <li>
-              <a href="/playlists/<%= playlist.id %>">
-                <div class="listing flex">
-                  <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
-                    <img width="200px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
-                    <% } else { %>
-                      <img width="200px" src="/media/missing.jpg" alt=":(">
-                      <% } %>
-                        <div>
-                          <h3>
-                            <%= playlist.name %>
-                          </h3>
-                          <p>
-                            <%= playlist.description %>
-                          </p>
-                        </div>
-                </div>
-              </a>
+              <div class="playlist-item">
+                <a href="/playlists/<%= playlist.id %>">
+                  <div class="listing flex">
+                    <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
+                      <img width="200px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
+                      <% } else { %>
+                        <img width="200px" src="/media/missing.jpg" alt=":(">
+                        <% } %>
+                          <div>
+                            <h3>
+                              <%= playlist.name %>
+                            </h3>
+                            <p>
+                              <%= playlist.description %>
+                            </p>
+                          </div>
+                  </div>
+                </a>
+                <button class="delete-playlist-btn" onclick="deletePlaylist(event, '<%= playlist.id %>', '<%= playlist.name %>')">Delete</button>
+              </div>
             </li>
             <% } %>
         </ul>
+        <% } %>
         <div class="window" id="missing-playlists">
           <h3>Missing playlists?</h3>
-          <p>You may need to add them to your profile through the spotify player.</p>
+          <p>You may need to add them to your profile through the spotify player or you may need to refresh from Spotify.</p>
         </div>
       </div>
 
     </main>
 
     <%- include("./components/footer") %>
+
+    <script>
+      // Hide loading overlay on page load (in case of back button)
+      window.addEventListener('pageshow', function(event) {
+        document.getElementById('loading-overlay').classList.add('hidden');
+      });
+
+      // Show loading overlay function
+      function showLoadingOverlay() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+      }
+
+      // Show loading indicator when clicking on playlists or liked songs
+      document.querySelectorAll('.listing-list a').forEach(link => {
+        link.addEventListener('click', function(e) {
+          showLoadingOverlay();
+        });
+      });
+
+      // Playlist deletion function
+      async function deletePlaylist(event, playlistId, playlistName) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (!confirm(`Delete "${playlistName}"?\n\nThis will remove it from your local database now, and it will be deleted from Spotify when you refresh.`)) {
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/playlists/${playlistId}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            // Remove playlist from UI
+            const playlistItem = event.target.closest('li');
+            playlistItem.style.opacity = '0.5';
+            playlistItem.style.transition = 'opacity 0.3s';
+            
+            setTimeout(() => {
+              playlistItem.remove();
+            }, 300);
+          } else {
+            alert('Failed to delete playlist. Please try again.');
+          }
+        } catch (error) {
+          console.error('Failed to delete playlist:', error);
+          alert('Failed to delete playlist. Please try again.');
+        }
+      }
+    </script>
 </body>
 
 </html>

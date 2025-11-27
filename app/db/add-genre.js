@@ -1,53 +1,72 @@
 const newConnection = require('./connection');
 
 async function addGenre(artistId, artist, trackId) {
-    const con = newConnection();
+  // console.log('[DB] addGenre - Starting for artist:', artistId, 'track:', trackId)
+  const con = newConnection();
 
-    try {
-        console.log('Connected to the database!');
+  try {
+    // console.log('[DB] addGenre - Connected to the database');
 
-        let genres = artist.genres
-        let genreString = "";
+    let genres = artist.genres
+    let genreString = "";
 
-        genres.forEach((genre, index) => {
-            genreString += genre;
-            if (index < genre.length) {
-                genreString += ", ";
-            }
-        })
+    genres.forEach((genre, index) => {
+      genreString += genre;
+      if (index < genre.length) {
+        genreString += ", ";
+      }
+    })
 
-        let insert = `
-                INSERT INTO TrackGenre (ArtistId, ArtistGenre) VALUES (?, ?) 
-                ON DUPLICATE KEY UPDATE 
-                ArtistId = VALUES(ArtistId)`;
+    // console.log('[DB] addGenre - Genres for artist:', genreString || 'none')
 
-        con.query(insert, [artistId, genreString], function (err, result) {
-            if (err) throw err;
-            console.log(`TrackGenre ${artistId} ${genreString} updated `);
-        });
+    // Insert TrackGenre and wait
+    await new Promise((resolve, reject) => {
+      let insert = `
+                  INSERT INTO TrackGenre (ArtistId, ArtistGenre) VALUES (?, ?) 
+                  ON DUPLICATE KEY UPDATE 
+                  ArtistId = VALUES(ArtistId)`;
 
-        insert = `
-                INSERT INTO ArtistGenre (TrackId, TrackGenre) VALUES (?, ?) 
-                ON DUPLICATE KEY UPDATE 
-                TrackId = VALUES(TrackId)`;
+      con.query(insert, [artistId, genreString], function (err, result) {
+        if (err) {
+          console.error('[DB] addGenre - Error inserting TrackGenre:', err.message)
+          reject(err);
+        } else {
+          // console.log('[DB] addGenre - TrackGenre inserted/updated for artist:', artistId);
+          resolve();
+        }
+      });
+    });
 
-        con.query(insert, [trackId, genreString], function (err, result) {
-            if (err) throw err;
-            console.log(`ArtistGenre ${trackId} ${genreString} updated `);
-        });
+    // Insert ArtistGenre and wait
+    await new Promise((resolve, reject) => {
+      let insert = `
+                  INSERT INTO ArtistGenre (TrackId, TrackGenre) VALUES (?, ?) 
+                  ON DUPLICATE KEY UPDATE 
+                  TrackId = VALUES(TrackId)`;
 
+      con.query(insert, [trackId, genreString], function (err, result) {
+        if (err) {
+          console.error('[DB] addGenre - Error inserting ArtistGenre:', err.message)
+          reject(err);
+        } else {
+          // console.log('[DB] addGenre - ArtistGenre inserted/updated for track:', trackId);
+          resolve();
+        }
+      });
+    });
 
-    } catch (error) {
-        console.error('Error while interacting with the database:', error);
-    } finally {
-        con.end((endErr) => {
-            if (endErr) {
-                console.error('Error while closing the database connection:', endErr);
-            } else {
-                console.log('Connection closed gracefully.');
-            }
-        });
-    }
+  } catch (error) {
+    console.error('[DB] addGenre - Error while interacting with the database:', error.message);
+    throw error;
+  } finally {
+    con.end((endErr) => {
+      if (endErr) {
+        console.error('[DB] addGenre - Error while closing the database connection:', endErr.message);
+      } else {
+        // console.log('[DB] addGenre - Connection closed gracefully');
+      }
+    });
+  }
 }
 
 module.exports = { addGenre };
