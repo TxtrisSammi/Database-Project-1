@@ -7,8 +7,8 @@ const app = express.Router()
 app.get("/login", (req, res) => {
   console.log('[AUTH] /login - Redirecting to Spotify authorization')
   // set scope of what our app can do
-  const scopes = ["user-read-private", "user-read-email", "playlist-read-private", "playlist-read-collaborative", "user-library-read", "user-top-read"]
-  console.log('[AUTH] Scopes requested:', scopes.join(', '))
+  const scopes = ["user-read-private", "user-read-email", "playlist-read-private", "playlist-read-collaborative", "user-library-read", "user-top-read", "user-library-modify", "playlist-modify-public", "playlist-modify-private"]
+  // console.log('[AUTH] Scopes requested:', scopes.join(', '))
   // send user to auth page with our app credentials
   res.redirect("https://accounts.spotify.com/authorize?" + stringify({
     response_type: "code",
@@ -30,7 +30,7 @@ app.get("/callback", async (req, res) => {
     return res.redirect("/login")
   }
 
-  console.log('[AUTH] Authorization code received, requesting access token')
+  // console.log('[AUTH] Authorization code received, requesting access token')
   // this builds the token request
   const authOptions = {
     method: "POST",
@@ -65,25 +65,25 @@ app.get("/callback", async (req, res) => {
   const accessToken = tokenData.access_token
   const refreshToken = tokenData.refresh_token
 
-  console.log('[AUTH] Tokens received successfully')
-  console.log('[AUTH] Access token present:', !!accessToken)
-  console.log('[AUTH] Refresh token present:', !!refreshToken)
+  // console.log('[AUTH] Tokens received successfully')
+  // console.log('[AUTH] Access token present:', !!accessToken)
+  // console.log('[AUTH] Refresh token present:', !!refreshToken)
 
   // store tokens in session
   req.session.authToken = accessToken
   if (refreshToken) {
     req.session.refreshToken = refreshToken
   }
-  
+
   // Fetch user ID and store in session
   try {
-    console.log('[AUTH] Fetching user ID from Spotify')
+    // console.log('[AUTH] Fetching user ID from Spotify')
     const userResponse = await fetch("https://api.spotify.com/v1/me", {
       headers: {
         Authorization: "Bearer " + accessToken
       }
     })
-    
+
     if (userResponse.ok) {
       const userData = await userResponse.json()
       if (userData && userData.id) {
@@ -94,8 +94,8 @@ app.get("/callback", async (req, res) => {
   } catch (error) {
     console.error('[AUTH] Failed to fetch user ID:', error.message)
   }
-  
-  console.log('[AUTH] Tokens stored in session, redirecting to /user')
+
+  // console.log('[AUTH] Tokens stored in session, redirecting to /user')
   res.redirect("/user")
 });
 

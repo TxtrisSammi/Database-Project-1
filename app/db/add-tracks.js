@@ -2,21 +2,21 @@ const newConnection = require('./connection');
 const { addGenre } = require("./add-genre")
 
 async function addTracks(tracks, playlistId, token) {
-  console.log('[DB] addTracks - Starting for', tracks.length, 'tracks (Playlist ID:', playlistId + ')')
+  // console.log('[DB] addTracks - Starting for', tracks.length, 'tracks (Playlist ID:', playlistId + ')')
   const con = newConnection();
-  
+
   // Cache to avoid fetching the same artist multiple times
   const artistCache = {};
 
   try {
-    console.log('[DB] addTracks - Connected to the database');
+    // console.log('[DB] addTracks - Connected to the database');
 
     for (const item of tracks) {
       let trackId = item.track.id;
       let trackName = item.track.name;
       let album = item.track.album.name;
-      let albumImageURL = (item.track.album.images && item.track.album.images.length > 0) 
-        ? item.track.album.images[0].url 
+      let albumImageURL = (item.track.album.images && item.track.album.images.length > 0)
+        ? item.track.album.images[0].url
         : null;
       let durationMs = item.track.duration_ms || 0;
 
@@ -32,7 +32,7 @@ async function addTracks(tracks, playlistId, token) {
             console.error('[DB] addTracks - Error inserting track:', trackName, err.message)
             reject(err);
           } else {
-            console.log('[DB] addTracks - Track inserted/updated:', trackName);
+            // console.log('[DB] addTracks - Track inserted/updated:', trackName);
             resolve();
           }
         });
@@ -50,29 +50,29 @@ async function addTracks(tracks, playlistId, token) {
             console.error('[DB] addTracks - Error updating playlist-track relation:', err.message)
             reject(err);
           } else {
-            console.log('[DB] addTracks - Updated playlist-track relation for playlist:', playlistId)
+            // console.log('[DB] addTracks - Updated playlist-track relation for playlist:', playlistId)
             resolve();
           }
         })
       });
-      
+
       let artists = item.track.artists;
       for (let i = 0; i < artists.length; i++) {
         let artistId = artists[i].id;
         let artistName = artists[i].name;
-        
+
         // Insert artist and wait
         await new Promise((resolve, reject) => {
           let insert = `
                   INSERT INTO Artist (ArtistId, ArtistName) VALUES(?, ?)
                   ON DUPLICATE KEY UPDATE
                   ArtistName = VALUES(ArtistName)`
-          con.query(insert, [artistId, artistName], function(err, result) {
+          con.query(insert, [artistId, artistName], function (err, result) {
             if (err) {
               console.error('[DB] addTracks - Error inserting artist:', artistName, err.message)
               reject(err);
             } else {
-              console.log('[DB] addTracks - Artist inserted/updated:', artistName)
+              // console.log('[DB] addTracks - Artist inserted/updated:', artistName)
               resolve();
             }
           })
@@ -80,17 +80,17 @@ async function addTracks(tracks, playlistId, token) {
 
         // Check cache first before making API call
         if (!artistCache[artistId]) {
-          console.log('[DB] addTracks - Fetching artist info for:', artistId, '(not in cache)')
+          // console.log('[DB] addTracks - Fetching artist info for:', artistId, '(not in cache)')
           artistCache[artistId] = await getArtistInfo(token, artistId)
         } else {
-          console.log('[DB] addTracks - Using cached artist info for:', artistId)
+          // console.log('[DB] addTracks - Using cached artist info for:', artistId)
         }
-        
+
         let artistInfo = artistCache[artistId]
-        
+
         // Add genre and wait for completion
         await addGenre(artistId, artistInfo, trackId)
-        
+
         // Insert track-artist relation and wait
         await new Promise((resolve, reject) => {
           let insert = `
@@ -103,7 +103,7 @@ async function addTracks(tracks, playlistId, token) {
               console.error('[DB] addTracks - Error inserting track-artist relation:', err.message)
               reject(err);
             } else {
-              console.log('[DB] addTracks - TrackArtist inserted/updated for artist:', artistId)
+              // console.log('[DB] addTracks - TrackArtist inserted/updated for artist:', artistId)
               resolve();
             }
           })
@@ -118,21 +118,21 @@ async function addTracks(tracks, playlistId, token) {
       if (endErr) {
         console.error('[DB] addTracks - Error while closing the database connection:', endErr.message);
       } else {
-        console.log('[DB] addTracks - Connection closed gracefully');
+        // console.log('[DB] addTracks - Connection closed gracefully');
       }
     });
   }
 }
 
 async function getArtistInfo(accessToken, id) {
-  console.log('[API] Calling Spotify API: GET /v1/artists/' + id)
+  // console.log('[API] Calling Spotify API: GET /v1/artists/' + id)
   let artists = []
-  let url =  `https://api.spotify.com/v1/artists/${id}`
+  let url = `https://api.spotify.com/v1/artists/${id}`
 
   while (url) {
     const response = await fetch(url, {
       headers: {
-        Authorization: "Bearer " + accessToken 
+        Authorization: "Bearer " + accessToken
       }
     })
 
@@ -145,7 +145,7 @@ async function getArtistInfo(accessToken, id) {
     }
 
     const data = await response.json();
-    console.log('[API] Artist info fetched successfully for:', data.name)
+    // console.log('[API] Artist info fetched successfully for:', data.name)
     artists = data;
     url = data.next;
   }

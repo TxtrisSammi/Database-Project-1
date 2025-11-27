@@ -165,6 +165,9 @@
                                 <%= formatted %>
                               </span>
                           </div>
+                          <div class="track-actions">
+                            <button class="remove-track-btn" onclick="removeTrack(event, '<%= playlist ? playlist.id : '' %>', '<%= item.track.id %>', '<%= item.track.name %>')">Remove</button>
+                          </div>
                   </div>
                 </li>
               <!-- </a> -->
@@ -514,6 +517,48 @@
         } catch (error) {
           console.error('Failed to save genres:', error);
           alert('Failed to save genres. Please try again.');
+        }
+      }
+
+      // Track removal function
+      async function removeTrack(event, playlistId, trackId, trackName) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (!confirm(`Remove "${trackName}" from this playlist?`)) {
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/playlists/${playlistId}/tracks/${trackId}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            // Remove track from UI
+            const trackItem = event.target.closest('.track-item');
+            trackItem.style.opacity = '0.5';
+            trackItem.style.transition = 'opacity 0.3s';
+            
+            setTimeout(() => {
+              trackItem.remove();
+              
+              // Update track count
+              const trackList = document.querySelector('.track-list');
+              const remainingTracks = trackList.querySelectorAll('.track-item').length;
+              
+              // Update count display if exists
+              const countElement = document.querySelector('#filter-count');
+              if (countElement) {
+                countElement.textContent = `Showing ${remainingTracks} of ${remainingTracks} tracks`;
+              }
+            }, 300);
+          } else {
+            alert('Failed to remove track. Please try again.');
+          }
+        } catch (error) {
+          console.error('Failed to remove track:', error);
+          alert('Failed to remove track. Please try again.');
         }
       }
     </script>

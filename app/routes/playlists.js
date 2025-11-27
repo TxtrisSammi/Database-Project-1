@@ -16,7 +16,7 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
     const { getPlaylists } = require("../db/get-playlists")
     const playlists = await getPlaylists(req.session.userId || '')
     const playlistData = playlists.find(p => p.PlaylistId === id)
-    
+
     let playlist = null
     if (playlistData) {
       playlist = {
@@ -39,7 +39,7 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
         track: {
           id: t.TrackId,
           name: t.TrackName,
-          album: { 
+          album: {
             name: t.Album,
             images: t.AlbumImageURL ? [{ url: t.AlbumImageURL }] : []
           },
@@ -79,19 +79,23 @@ app.post("/playlists/:id/refresh", validatePlaylistId, async (req, res, next) =>
       return res.redirect("/auth")
     }
 
-    console.log('[PLAYLIST] Fetching playlist info for ID:', id)
+    // First, process pending changes
+    console.log('[PLAYLIST] Checking for pending changes...')
+    await processPendingChanges(id, token)
+
+    // console.log('[PLAYLIST] Fetching playlist info for ID:', id)
     let playlist = await getPlaylistInfo(token, id)
-    console.log('[PLAYLIST] Playlist received:', playlist.name)
-    
-    console.log('[PLAYLIST] Fetching tracks for playlist:', id)
+    // console.log('[PLAYLIST] Playlist received:', playlist.name)
+
+    // console.log('[PLAYLIST] Fetching tracks for playlist:', id)
     let tracks = await getTracks(token, id)
-    console.log('[PLAYLIST] Received', tracks.length, 'tracks')
+    // console.log('[PLAYLIST] Received', tracks.length, 'tracks')
 
-    console.log('[PLAYLIST] Fetching genres for tracks from Spotify')
+    // console.log('[PLAYLIST] Fetching genres for tracks from Spotify')
     let genres = await fetchGenresForTracks(tracks, token)
-    console.log('[PLAYLIST] Genres fetched for', Object.keys(genres).length, 'tracks')
+    // console.log('[PLAYLIST] Genres fetched for', Object.keys(genres).length, 'tracks')
 
-    console.log('[PLAYLIST] Updating tracks in database')
+    // console.log('[PLAYLIST] Updating tracks in database')
     await addTracks(tracks, id, token)
 
     console.log('[PLAYLIST] Redirecting back to playlist')
@@ -104,7 +108,7 @@ app.post("/playlists/:id/refresh", validatePlaylistId, async (req, res, next) =>
 })
 
 async function getPlaylistInfo(accessToken, id) {
-  console.log('[API] Calling Spotify API: GET /v1/playlists/' + id)
+  // console.log('[API] Calling Spotify API: GET /v1/playlists/' + id)
   const response = await fetch(`https://api.spotify.com/v1/playlists/${id}`, {
     headers: {
       Authorization: "Bearer " + accessToken
@@ -126,19 +130,19 @@ async function getPlaylistInfo(accessToken, id) {
     throw new Error("Invalid playlist data received")
   }
 
-  console.log('[API] Playlist info fetched successfully')
+  // console.log('[API] Playlist info fetched successfully')
   return data
 }
 
 
 async function getTracks(accessToken, id) {
-  console.log('[API] Calling Spotify API: GET /v1/playlists/' + id + '/tracks')
+  // console.log('[API] Calling Spotify API: GET /v1/playlists/' + id + '/tracks')
   let tracks = []
   let url = `https://api.spotify.com/v1/playlists/${id}/tracks?limit=50`
   let page = 1
 
   while (url) {
-    console.log('[API] Fetching tracks page', page)
+    // console.log('[API] Fetching tracks page', page)
     const response = await fetch(url, {
       headers: {
         Authorization: "Bearer " + accessToken
@@ -160,7 +164,7 @@ async function getTracks(accessToken, id) {
       throw new Error("Invalid tracks data received")
     }
 
-    console.log('[API] Received', data.items.length, 'tracks on page', page)
+    // console.log('[API] Received', data.items.length, 'tracks on page', page)
     tracks = tracks.concat(data.items)
     url = data.next
     page++
@@ -171,8 +175,8 @@ async function getTracks(accessToken, id) {
 }
 
 async function fetchGenresForTracks(tracks, token) {
-  console.log('[API] Fetching artist genres from Spotify')
-  
+  // console.log('[API] Fetching artist genres from Spotify')
+
   // Get unique artist IDs from all tracks
   const artistIds = new Set()
   tracks.forEach(item => {
@@ -182,36 +186,36 @@ async function fetchGenresForTracks(tracks, token) {
       })
     }
   })
-  
+
   const uniqueArtistIds = [...artistIds]
-  console.log('[API] Found', uniqueArtistIds.length, 'unique artists')
-  
+  // console.log('[API] Found', uniqueArtistIds.length, 'unique artists')
+
   if (uniqueArtistIds.length === 0) {
     return {}
   }
-  
+
   // Fetch artists in batches of 50 (Spotify API limit)
   const artistGenreMap = {}
-  
+
   for (let i = 0; i < uniqueArtistIds.length; i += 50) {
     const batch = uniqueArtistIds.slice(i, i + 50)
     const url = `https://api.spotify.com/v1/artists?ids=${batch.join(',')}`
-    
-    console.log('[API] Fetching artist batch', Math.floor(i / 50) + 1, '(' + batch.length + ' artists)')
-    
+
+    // console.log('[API] Fetching artist batch', Math.floor(i / 50) + 1, '(' + batch.length + ' artists)')
+
     const response = await fetch(url, {
       headers: {
         Authorization: "Bearer " + token
       }
     })
-    
+
     if (!response.ok) {
       console.error('[API] Failed to fetch artists - Status:', response.status)
       continue
     }
-    
+
     const data = await response.json()
-    
+
     if (data.artists) {
       data.artists.forEach(artist => {
         if (artist && artist.genres && artist.genres.length > 0) {
@@ -220,16 +224,16 @@ async function fetchGenresForTracks(tracks, token) {
       })
     }
   }
-  
-  console.log('[API] Artist genres fetched, found genres for', Object.keys(artistGenreMap).length, 'artists')
-  
+
+  // console.log('[API] Artist genres fetched, found genres for', Object.keys(artistGenreMap).length, 'artists')
+
   // Map genres to tracks - combine genres from ALL artists
   const trackGenreMap = {}
   tracks.forEach(item => {
     if (item.track && item.track.artists) {
       // Collect genres from all artists on this track
       const allGenres = new Set() // Use Set to avoid duplicates
-      
+
       item.track.artists.forEach(artist => {
         if (artistGenreMap[artist.id]) {
           // Split genres and add each one to the set
@@ -240,16 +244,84 @@ async function fetchGenresForTracks(tracks, token) {
           })
         }
       })
-      
+
       // Convert Set back to comma-separated string
       if (allGenres.size > 0) {
         trackGenreMap[item.track.id] = [...allGenres].join(', ')
       }
     }
   })
-  
+
   return trackGenreMap
 }
 
+async function processPendingChanges(playlistId, token) {
+  const newConnection = require('../db/connection')
+  const con = newConnection()
+
+  return new Promise((resolve, reject) => {
+    // Get pending changes for this playlist
+    const query = "SELECT * FROM PendingChanges WHERE PlaylistId = ? AND ChangeType = 'REMOVE_TRACK'"
+
+    con.query(query, [playlistId], async (err, results) => {
+      if (err) {
+        con.end()
+        console.error('[PLAYLIST] Error fetching pending changes:', err.message)
+        reject(err)
+        return
+      }
+
+      if (results.length === 0) {
+        con.end()
+        console.log('[PLAYLIST] No pending changes found')
+        resolve()
+        return
+      }
+
+      console.log('[PLAYLIST] Found', results.length, 'pending track removals')
+
+      // Process each removal
+      for (const change of results) {
+        try {
+          console.log('[PLAYLIST] Removing track', change.TrackId, 'from Spotify playlist')
+
+          // Make Spotify API call to remove track
+          const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              tracks: [
+                { uri: `spotify:track:${change.TrackId}` }
+              ]
+            })
+          })
+
+          if (response.ok) {
+            // console.log('[PLAYLIST] Successfully removed track from Spotify')
+
+            // Delete the pending change record
+            await new Promise((resolve2, reject2) => {
+              con.query('DELETE FROM PendingChanges WHERE ChangeId = ?', [change.ChangeId], (err2) => {
+                if (err2) reject2(err2)
+                else resolve2()
+              })
+            })
+          } else {
+            console.error('[PLAYLIST] Failed to remove track from Spotify:', response.status)
+          }
+        } catch (error) {
+          console.error('[PLAYLIST] Error processing pending change:', error.message)
+        }
+      }
+
+      con.end()
+      // console.log('[PLAYLIST] Finished processing pending changes')
+      resolve()
+    })
+  })
+}
 
 module.exports = app

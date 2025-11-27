@@ -423,3 +423,29 @@ a {
   font-style: italic;
   font-size: 0.85rem;
 }
+
+/* Track actions (remove button) */
+.track-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 1rem;
+}
+
+.remove-track-btn {
+  background: #dc3545;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  opacity: 0.8;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.remove-track-btn:hover {
+  opacity: 1;
+  background: #c82333;
+}

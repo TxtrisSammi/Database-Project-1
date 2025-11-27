@@ -15,7 +15,7 @@ async function addUser(userData) {
         return;
       }
       
-      console.log('[DB] addUser - Connected to the database');
+      // console.log('[DB] addUser - Connected to the database');
 
       let insert = `
         INSERT INTO User (UserId, UserName, ImageURL, Product) 
@@ -33,7 +33,7 @@ async function addUser(userData) {
           console.error('[DB] addUser - Error inserting user:', err.message)
           reject(err);
         } else {
-          console.log('[DB] addUser - User record inserted/updated for:', display_name);
+          // console.log('[DB] addUser - User record inserted/updated for:', display_name);
           resolve(result);
         }
       });

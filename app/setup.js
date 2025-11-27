@@ -18,6 +18,7 @@ const con = mysql.createConnection({
 const query = util.promisify(con.query).bind(con);
 
 const tables = [
+  "PendingChanges",
   "PlaylistTrack",
   "Playlist",
   "TrackArtist",
@@ -160,6 +161,26 @@ async function createAll() {
     );
   `;
 
+  const createPendingChanges = `
+    CREATE TABLE IF NOT EXISTS PendingChanges (
+      ChangeId INT AUTO_INCREMENT PRIMARY KEY,
+      PlaylistId VARCHAR(255),
+      TrackId VARCHAR(255) NULL,
+      ChangeType ENUM('REMOVE_TRACK', 'DELETE_PLAYLIST') DEFAULT 'REMOVE_TRACK',
+      CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  const createTrigger = `
+    CREATE TRIGGER IF NOT EXISTS after_playlisttrack_delete
+    AFTER DELETE ON PlaylistTrack
+    FOR EACH ROW
+    BEGIN
+      INSERT INTO PendingChanges (PlaylistId, TrackId, ChangeType)
+      VALUES (OLD.PlaylistId, OLD.TrackId, 'REMOVE_TRACK');
+    END;
+  `;
+
   const queries = [
     createUser,
     createTrack,
@@ -168,11 +189,21 @@ async function createAll() {
     createTrackGenre,
     createTrackArtist,
     createPlaylist,
-    createPlaylistTrack
+    createPlaylistTrack,
+    createPendingChanges
   ];
 
   for (const sql of queries) {
     await query(sql);
+  }
+
+  // Create trigger separately
+  try {
+    await query("DROP TRIGGER IF EXISTS after_playlisttrack_delete");
+    await query(createTrigger);
+    console.log("✓ Trigger created successfully");
+  } catch (err) {
+    console.log("⚠ Trigger creation:", err.message);
   }
 
   console.log("✓ All tables created successfully");

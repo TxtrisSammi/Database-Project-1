@@ -74,3 +74,34 @@
   color: var(--bg-light);
   font-size: 1.2rem;
 }
+/* Playlist deletion */
+.playlist-item {
+  position: relative;
+  width: 100%;
+}
+
+.delete-playlist-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #dc3545;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 10;
+}
+
+.playlist-item:hover .delete-playlist-btn {
+  opacity: 0.9;
+}
+
+.delete-playlist-btn:hover {
+  opacity: 1 !important;
+  background: #c82333;
+}

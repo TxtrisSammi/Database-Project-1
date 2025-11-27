@@ -1,11 +1,11 @@
 const newConnection = require('./connection');
 
 async function addPlaylists(playlists, userId) {
-  console.log('[DB] addPlaylists - Starting for', playlists.length, 'playlists (User ID:', userId + ')')
+  // console.log('[DB] addPlaylists - Starting for', playlists.length, 'playlists (User ID:', userId + ')')
   const con = newConnection();
 
   try {
-    console.log('[DB] addPlaylists - Connected to the database');
+    // console.log('[DB] addPlaylists - Connected to the database');
 
     for (const playlist of playlists) {
       let playlistId = playlist.id;
@@ -25,7 +25,7 @@ async function addPlaylists(playlists, userId) {
           console.error('[DB] addPlaylists - Error inserting playlist:', playlistName, err.message)
           throw err;
         }
-        console.log('[DB] addPlaylists - Playlist inserted/updated:', playlistName);
+        // console.log('[DB] addPlaylists - Playlist inserted/updated:', playlistName);
       });
 
     }
@@ -37,7 +37,7 @@ async function addPlaylists(playlists, userId) {
       if (endErr) {
         console.error('[DB] addPlaylists - Error while closing the database connection:', endErr.message);
       } else {
-        console.log('[DB] addPlaylists - Connection closed gracefully');
+        // console.log('[DB] addPlaylists - Connection closed gracefully');
       }
     });
   }

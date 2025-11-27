@@ -63,9 +63,9 @@ app.post("/liked-songs/refresh", async (req, res, next) => {
 
     let likedSongs
     try {
-      console.log('[LIKED-SONGS] Fetching liked songs from Spotify API')
+      // console.log('[LIKED-SONGS] Fetching liked songs from Spotify API')
       likedSongs = await getLikedSongs(token)
-      console.log('[LIKED-SONGS] Received', likedSongs.length, 'liked songs')
+      // console.log('[LIKED-SONGS] Received', likedSongs.length, 'liked songs')
     } catch (error) {
       // Check for insufficient scope error
       if (error.message.includes("Insufficient client scope")) {
@@ -96,7 +96,7 @@ app.post("/liked-songs/refresh", async (req, res, next) => {
     }
 
     if (req.session.userId) {
-      console.log('[LIKED-SONGS] Updating liked songs in database for user:', req.session.userId)
+      // console.log('[LIKED-SONGS] Updating liked songs in database for user:', req.session.userId)
       // Use a special playlist ID for liked songs
       const likedSongsPlaylistId = req.session.userId + '_liked'
       
@@ -123,7 +123,7 @@ app.post("/liked-songs/refresh", async (req, res, next) => {
             console.error('[LIKED-SONGS] Error creating liked songs playlist:', err.message)
             reject(err)
           } else {
-            console.log('[LIKED-SONGS] Liked Songs playlist entry created/updated')
+            // console.log('[LIKED-SONGS] Liked Songs playlist entry created/updated')
             resolve()
           }
         })
@@ -142,13 +142,13 @@ app.post("/liked-songs/refresh", async (req, res, next) => {
 })
 
 async function getLikedSongs(accessToken) {
-  console.log('[API] Calling Spotify API: GET /v1/me/tracks')
+  // console.log('[API] Calling Spotify API: GET /v1/me/tracks')
   let tracks = []
   let url = "https://api.spotify.com/v1/me/tracks?limit=50"
   let page = 1
 
   while (url) {
-    console.log('[API] Fetching liked songs page', page)
+    // console.log('[API] Fetching liked songs page', page)
     const response = await fetch(url, {
       headers: {
         Authorization: "Bearer " + accessToken
@@ -179,7 +179,7 @@ async function getLikedSongs(accessToken) {
       throw new Error("Invalid liked songs data received")
     }
 
-    console.log('[API] Received', data.items.length, 'liked songs on page', page)
+    // console.log('[API] Received', data.items.length, 'liked songs on page', page)
     tracks = tracks.concat(data.items)
     url = data.next
     page++

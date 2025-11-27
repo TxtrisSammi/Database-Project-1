@@ -83,30 +83,33 @@
           </li>
           <% for (const playlist of playlists) { %>
             <li>
-              <a href="/playlists/<%= playlist.id %>">
-                <div class="listing flex">
-                  <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
-                    <img width="200px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
-                    <% } else { %>
-                      <img width="200px" src="/media/missing.jpg" alt=":(">
-                      <% } %>
-                        <div>
-                          <h3>
-                            <%= playlist.name %>
-                          </h3>
-                          <p>
-                            <%= playlist.description %>
-                          </p>
-                        </div>
-                </div>
-              </a>
+              <div class="playlist-item">
+                <a href="/playlists/<%= playlist.id %>">
+                  <div class="listing flex">
+                    <% if (playlist.images && playlist.images.length> 0 && playlist.images[0].url) { %>
+                      <img width="200px" src="<%= playlist.images[0].url %>" alt="<%= playlist.name %>">
+                      <% } else { %>
+                        <img width="200px" src="/media/missing.jpg" alt=":(">
+                        <% } %>
+                          <div>
+                            <h3>
+                              <%= playlist.name %>
+                            </h3>
+                            <p>
+                              <%= playlist.description %>
+                            </p>
+                          </div>
+                  </div>
+                </a>
+                <button class="delete-playlist-btn" onclick="deletePlaylist(event, '<%= playlist.id %>', '<%= playlist.name %>')">Delete</button>
+              </div>
             </li>
             <% } %>
         </ul>
         <% } %>
         <div class="window" id="missing-playlists">
           <h3>Missing playlists?</h3>
-          <p>You may need to add them to your profile through the spotify player.</p>
+          <p>You may need to add them to your profile through the spotify player or you may need to refresh from Spotify.</p>
         </div>
       </div>
 
@@ -131,6 +134,38 @@
           showLoadingOverlay();
         });
       });
+
+      // Playlist deletion function
+      async function deletePlaylist(event, playlistId, playlistName) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (!confirm(`Delete "${playlistName}"?\n\nThis will remove it from your local database now, and it will be deleted from Spotify when you refresh.`)) {
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/playlists/${playlistId}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            // Remove playlist from UI
+            const playlistItem = event.target.closest('li');
+            playlistItem.style.opacity = '0.5';
+            playlistItem.style.transition = 'opacity 0.3s';
+            
+            setTimeout(() => {
+              playlistItem.remove();
+            }, 300);
+          } else {
+            alert('Failed to delete playlist. Please try again.');
+          }
+        } catch (error) {
+          console.error('Failed to delete playlist:', error);
+          alert('Failed to delete playlist. Please try again.');
+        }
+      }
     </script>
 </body>
 

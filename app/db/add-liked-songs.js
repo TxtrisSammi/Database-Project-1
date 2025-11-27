@@ -1,11 +1,11 @@
 const { pool } = require("./connection")
 
 async function addLikedSongs(tracks, userId) {
-  console.log('[DB] addLikedSongs - Starting for', tracks.length, 'liked songs (User ID:', userId + ')')
+  // console.log('[DB] addLikedSongs - Starting for', tracks.length, 'liked songs (User ID:', userId + ')')
   const connection = await pool.promise().getConnection()
 
   try {
-    console.log('[DB] addLikedSongs - Connection acquired, beginning transaction')
+    // console.log('[DB] addLikedSongs - Connection acquired, beginning transaction')
     await connection.beginTransaction()
 
     let processed = 0
@@ -24,7 +24,7 @@ async function addLikedSongs(tracks, userId) {
           'INSERT INTO Track (track_id, track_name, duration_ms, explicit, popularity) VALUES (?, ?, ?, ?, ?)',
           [track.id, track.name, track.duration_ms, track.explicit ? 1 : 0, track.popularity || 0]
         )
-        console.log('[DB] addLikedSongs - New track inserted:', track.name)
+        // console.log('[DB] addLikedSongs - New track inserted:', track.name)
       }
 
       const [likeExists] = await connection.query(
