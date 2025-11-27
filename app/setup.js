@@ -34,6 +34,12 @@ async function main() {
   try {
     await connectDB();
 
+    // Check emoji support
+    console.log("\n=== Checking Database Character Set ===");
+    emojiFix(con);
+    // Wait a moment for the check to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     const args = process.argv.slice(2);
     const shouldDrop = args.includes("--drop");
     const shouldVerify = args.includes("--verify");
@@ -84,7 +90,7 @@ async function createAll() {
       ImageURL VARCHAR(500),
       Product VARCHAR(50),
       LastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createTrack = `
@@ -94,14 +100,14 @@ async function createAll() {
       Album VARCHAR(255),
       AlbumImageURL VARCHAR(500),
       DurationMs INT
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createArtist = `
     CREATE TABLE IF NOT EXISTS Artist (
       ArtistId VARCHAR(255) PRIMARY KEY,
       ArtistName VARCHAR(255)
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createArtistGenre = `
@@ -111,7 +117,7 @@ async function createAll() {
       PRIMARY KEY (TrackId, TrackGenre),
       FOREIGN KEY (TrackId) REFERENCES Track(TrackId)
         ON UPDATE CASCADE ON DELETE CASCADE
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createTrackGenre = `
@@ -121,7 +127,7 @@ async function createAll() {
       PRIMARY KEY (ArtistId, ArtistGenre),
       FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)
         ON UPDATE CASCADE ON DELETE CASCADE
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createTrackArtist = `
@@ -133,7 +139,7 @@ async function createAll() {
         ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY (ArtistId) REFERENCES Artist(ArtistId)
         ON UPDATE CASCADE ON DELETE CASCADE
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createPlaylist = `
@@ -146,7 +152,7 @@ async function createAll() {
       LastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (UserId) REFERENCES User(UserId)
         ON UPDATE CASCADE ON DELETE CASCADE
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createPlaylistTrack = `
@@ -158,7 +164,7 @@ async function createAll() {
         ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY (PlaylistId) REFERENCES Playlist(PlaylistId)
         ON UPDATE CASCADE ON DELETE CASCADE
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createPendingChanges = `
@@ -168,7 +174,7 @@ async function createAll() {
       TrackId VARCHAR(255) NULL,
       ChangeType ENUM('REMOVE_TRACK', 'DELETE_PLAYLIST') DEFAULT 'REMOVE_TRACK',
       CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
 
   const createTrigger = `
@@ -240,5 +246,41 @@ async function verifyTables() {
       console.error(`  ✗ ${table}: ${err.message}`);
     }
   }
+}
+
+function emojiFix(con) {
+  // uncomment if emoji's are causing issues
+  // let x = `
+  //   ALTER DATABASE ${process.env.DB} 
+  //   CHARACTER SET utf8mb4 
+  //   COLLATE utf8mb4_unicode_ci
+  //   ;
+  //   `
+  // con.query(x)
+
+
+  // checks charsets 
+  // (make sure client, connection, and database are utf8mb4 NOT utf8mb3 
+  // if you want emojis to work)
+  let y = `
+  SHOW VARIABLES 
+  WHERE Variable_name 
+  LIKE 'character\_set\_%' 
+  OR Variable_name 
+  LIKE 'collation%'
+  ;
+  `
+
+  con.query(y, (err, res) => {
+    if (err) {
+      console.error("Error checking character set:", err.message);
+    } else {
+      console.log("\nDatabase Character Set Configuration:");
+      res.forEach(row => {
+        console.log(`  ${row.Variable_name}: ${row.Value}`);
+      });
+      console.log("");
+    }
+  })
 }
 
