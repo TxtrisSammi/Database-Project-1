@@ -1,71 +1,7 @@
 const express = require("express")
 const app = express.Router()
-const newConnection = require("../db/connection")
-
-// Add a genre to a track
-app.post("/api/tracks/:trackId/genres", async (req, res) => {
-  const { trackId } = req.params
-  const { genre } = req.body
-
-  if (!genre || !genre.trim()) {
-    return res.status(400).json({ error: "Genre is required" })
-  }
-
-  const con = newConnection()
-
-  try {
-    await new Promise((resolve, reject) => {
-      const query = `
-        INSERT INTO ArtistGenre (TrackId, TrackGenre) 
-        VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE TrackGenre = VALUES(TrackGenre)
-      `
-      
-      con.query(query, [trackId, genre.trim()], (err, result) => {
-        con.end()
-        if (err) {
-          console.error('[API] Error adding genre:', err.message)
-          reject(err)
-        } else {
-          // console.log('[API] Genre added:', genre, 'to track:', trackId)
-          resolve(result)
-        }
-      })
-    })
-
-    res.json({ success: true, genre: genre.trim() })
-  } catch (error) {
-    res.status(500).json({ error: "Failed to add genre" })
-  }
-})
-
-// Remove a genre from a track
-app.delete("/api/tracks/:trackId/genres/:genre", async (req, res) => {
-  const { trackId, genre } = req.params
-
-  const con = newConnection()
-
-  try {
-    await new Promise((resolve, reject) => {
-      const query = "DELETE FROM ArtistGenre WHERE TrackId = ? AND TrackGenre = ?"
-      
-      con.query(query, [trackId, decodeURIComponent(genre)], (err, result) => {
-        con.end()
-        if (err) {
-          console.error('[API] Error removing genre:', err.message)
-          reject(err)
-        } else {
-          // console.log('[API] Genre removed:', genre, 'from track:', trackId)
-          resolve(result)
-        }
-      })
-    })
-
-    res.json({ success: true })
-  } catch (error) {
-    res.status(500).json({ error: "Failed to remove genre" })
-  }
-})
+const newConnection = require("../../db/connection")
+const { generateLocalPlaylistId } = require('../../utils/playlist-helpers')
 
 // Remove a track from a playlist
 app.delete("/api/playlists/:playlistId/tracks/:trackId", async (req, res) => {
@@ -83,7 +19,6 @@ app.delete("/api/playlists/:playlistId/tracks/:trackId", async (req, res) => {
           console.error('[API] Error removing track from playlist:', err.message)
           reject(err)
         } else {
-          // console.log('[API] Track removed:', trackId, 'from playlist:', playlistId)
           resolve(result)
         }
       })
@@ -114,10 +49,7 @@ app.post("/api/playlists/create-local", async (req, res) => {
   const con = newConnection()
 
   try {
-    // Generate unique ID: <uuid>_<timestamp>
-    const uuid = require('crypto').randomUUID().substring(0, 8)
-    const timestamp = Date.now()
-    const playlistId = `local_${uuid}_${timestamp}`
+    const playlistId = generateLocalPlaylistId()
 
     // Create playlist
     await new Promise((resolve, reject) => {
@@ -230,106 +162,6 @@ app.delete("/api/playlists/:playlistId", async (req, res) => {
   } catch (error) {
     con.end()
     res.status(500).json({ error: "Failed to delete playlist" })
-  }
-})
-
-// Get pending changes for current user
-app.get("/api/pending-changes", async (req, res) => {
-  const userId = req.session?.userId
-
-  if (!userId) {
-    return res.status(401).json({ error: "Not authenticated" })
-  }
-
-  const con = newConnection()
-
-  try {
-    const changes = await new Promise((resolve, reject) => {
-      const query = `
-        SELECT *
-        FROM PendingChanges
-        WHERE UserId = ?
-        ORDER BY CreatedAt DESC
-      `
-      
-      con.query(query, [userId], (err, results) => {
-        con.end()
-        if (err) {
-          console.error('[API] Error fetching pending changes:', err.message)
-          reject(err)
-        } else {
-          resolve(results)
-        }
-      })
-    })
-
-    res.json({ success: true, changes })
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch pending changes" })
-  }
-})
-
-// Cancel a pending change
-app.delete("/api/pending-changes/:changeId", async (req, res) => {
-  const { changeId } = req.params
-  const userId = req.session?.userId
-
-  if (!userId) {
-    return res.status(401).json({ error: "Not authenticated" })
-  }
-
-  const con = newConnection()
-
-  try {
-    // Get the pending change details
-    const change = await new Promise((resolve, reject) => {
-      con.query('SELECT * FROM PendingChanges WHERE ChangeId = ? AND UserId = ?', [changeId, userId], (err, results) => {
-        if (err) reject(err)
-        else resolve(results[0])
-      })
-    })
-
-    if (!change) {
-      con.end()
-      return res.status(404).json({ error: "Pending change not found" })
-    }
-
-    // Handle different change types
-    if (change.ChangeType === 'REMOVE_TRACK') {
-      // Re-add the track to the playlist
-      await new Promise((resolve, reject) => {
-        con.query('INSERT IGNORE INTO PlaylistTrack (TrackId, PlaylistId) VALUES (?, ?)', 
-          [change.TrackId, change.PlaylistId], (err) => {
-            if (err) reject(err)
-            else resolve()
-          })
-      })
-    } else if (change.ChangeType === 'CREATE_PLAYLIST') {
-      // Delete the local playlist
-      await new Promise((resolve, reject) => {
-        con.query('DELETE FROM Playlist WHERE PlaylistId = ? AND IsLocalOnly = TRUE', 
-          [change.PlaylistId], (err) => {
-            if (err) reject(err)
-            else resolve()
-          })
-      })
-    }
-    // For DELETE_PLAYLIST, we just remove the pending change (playlist already deleted locally)
-
-    // Delete the pending change
-    await new Promise((resolve, reject) => {
-      con.query('DELETE FROM PendingChanges WHERE ChangeId = ?', [changeId], (err) => {
-        con.end()
-        if (err) reject(err)
-        else resolve()
-      })
-    })
-
-    res.json({ success: true })
-  } catch (error) {
-    con.end()
-    console.error('[API] Error canceling pending change:', error.message)
-    res.status(500).json({ error: "Failed to cancel pending change" })
   }
 })
 

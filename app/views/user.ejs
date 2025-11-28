@@ -12,14 +12,7 @@
 </head>
 
 <body class="lava">
-  <!-- Loading overlay -->
-  <div id="loading-overlay" class="loading-overlay hidden">
-    <div style="text-align: center;">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Loading...</div>
-      <div class="loading-warning">If this is a large playlist, this may take a while. Please be patient.</div>
-    </div>
-  </div>
+  <%- include("./components/modals/loading-overlay") %>
 
   <%- include("./components/header") %>
 

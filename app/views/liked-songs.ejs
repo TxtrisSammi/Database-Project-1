@@ -12,38 +12,8 @@
 </head>
 
 <body class="lava">
-  <!-- Loading overlay -->
-  <div id="loading-overlay" class="loading-overlay hidden">
-    <div style="text-align: center;">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Loading...</div>
-      <div class="loading-warning">If this is a large playlist, this may take a while. Please be patient.</div>
-    </div>
-  </div>
-
-  <!-- Modal for creating new playlist -->
-  <div id="create-playlist-modal" class="modal hidden">
-    <div class="modal-content">
-      <h2>Create New Playlist</h2>
-      <form id="create-playlist-form">
-        <div class="form-group">
-          <label for="playlist-name">Playlist Name *</label>
-          <input type="text" id="playlist-name" required placeholder="My Filtered Playlist">
-        </div>
-        <div class="form-group">
-          <label for="playlist-description">Description (optional)</label>
-          <textarea id="playlist-description" rows="3" placeholder="Created from filtered tracks"></textarea>
-        </div>
-        <div class="form-group">
-          <p id="track-count-display"></p>
-        </div>
-        <div class="modal-actions">
-          <button type="submit" class="save-btn">Create Playlist</button>
-          <button type="button" class="cancel-btn" onclick="closeCreatePlaylistModal()">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <%- include("./components/modals/loading-overlay") %>
+  <%- include("./components/modals/create-playlist-modal") %>
 
   <%- include("./components/header") %>
 
@@ -178,6 +148,8 @@
 
     <%- include("./components/footer") %>
 
+    <script src="/js/filters.js"></script>
+    <script src="/js/playlist-creator.js"></script>
     <script>
       // Hide loading overlay when page loads (handles back button navigation)
       window.addEventListener('pageshow', function(event) {
@@ -189,190 +161,16 @@
         document.getElementById('loading-overlay').classList.remove('hidden');
       }
 
-      // Filtering functionality
+      // Data from server
       const tracks = <%- JSON.stringify(tracks) %>;
       const genres = <%- JSON.stringify(genres) %>;
+      const userId = '<%= userId %>';
+
+      // Initialize filters
+      initializeFilters(tracks, genres);
       
-      let filters = {
-        artists: [],
-        albums: [],
-        genres: [],
-        trackName: []
-      };
-
-      function parseFilterInput(input) {
-        if (!input) return [];
-        
-        const terms = [];
-        const regex = /"([^"]*)"|([^,]+)/g;
-        let match;
-        
-        while ((match = regex.exec(input)) !== null) {
-          const term = match[1] || match[2];
-          if (term && term.trim()) {
-            const trimmed = term.trim();
-            terms.push({
-              value: trimmed.toLowerCase(),
-              exact: !!match[1]
-            });
-          }
-        }
-        
-        return terms;
-      }
-
-      function matchesFilter(text, filterTerms) {
-        if (filterTerms.length === 0) return true;
-        const lowerText = text.toLowerCase();
-        
-        return filterTerms.some(term => {
-          if (term.exact) {
-            return lowerText === term.value;
-          } else {
-            return lowerText.includes(term.value);
-          }
-        });
-      }
-
-      function filterTracks() {
-        const trackItems = document.querySelectorAll('.track-item');
-        let visibleCount = 0;
-
-        trackItems.forEach((item, index) => {
-          const track = tracks[index];
-          if (!track || !track.track) {
-            item.style.display = 'none';
-            return;
-          }
-
-          let showTrack = true;
-
-          // Artist filter (OR within category)
-          if (filters.artists.length > 0) {
-            const artistNames = track.track.artists.map(a => a.name).join(' ');
-            showTrack = showTrack && matchesFilter(artistNames, filters.artists);
-          }
-
-          // Album filter (OR within category)
-          if (filters.albums.length > 0) {
-            const albumName = track.track.album ? track.track.album.name : '';
-            showTrack = showTrack && matchesFilter(albumName, filters.albums);
-          }
-
-          // Genre filter (OR within category)
-          if (filters.genres.length > 0) {
-            const trackGenres = genres[track.track.id] || '';
-            showTrack = showTrack && matchesFilter(trackGenres, filters.genres);
-          }
-
-          // Track name filter
-          if (filters.trackName.length > 0) {
-            showTrack = showTrack && matchesFilter(track.track.name, filters.trackName);
-          }
-
-          item.style.display = showTrack ? '' : 'none';
-          if (showTrack) visibleCount++;
-        });
-
-        updateFilterCount(visibleCount, tracks.length);
-        updateFilterChips();
-      }
-
-      function updateFilterCount(visible, total) {
-        const countEl = document.getElementById('filter-count');
-        if (visible === total) {
-          countEl.textContent = `Showing all ${total} tracks`;
-        } else {
-          countEl.textContent = `Showing ${visible} of ${total} tracks`;
-        }
-      }
-
-      function updateFilterChips() {
-        const chipsContainer = document.getElementById('filter-chips');
-        chipsContainer.innerHTML = '';
-
-        const allFilters = [
-          ...filters.artists.map(a => ({ type: 'artist', value: a.value, exact: a.exact })),
-          ...filters.albums.map(a => ({ type: 'album', value: a.value, exact: a.exact })),
-          ...filters.genres.map(g => ({ type: 'genre', value: g.value, exact: g.exact })),
-          ...filters.trackName.map(t => ({ type: 'track', value: t.value, exact: t.exact }))
-        ];
-
-        if (allFilters.length === 0) {
-          chipsContainer.style.display = 'none';
-          return;
-        }
-
-        chipsContainer.style.display = 'flex';
-        allFilters.forEach(filter => {
-          const chip = document.createElement('span');
-          chip.className = 'filter-chip';
-          const prefix = filter.exact ? '=' : '~';
-          chip.textContent = `${filter.type} ${prefix} ${filter.value}`;
-          
-          const removeBtn = document.createElement('button');
-          removeBtn.className = 'chip-remove';
-          removeBtn.textContent = '×';
-          removeBtn.onclick = () => removeFilter(filter.type, filter.value);
-          
-          chip.appendChild(removeBtn);
-          chipsContainer.appendChild(chip);
-        });
-      }
-
-      function removeFilter(type, value) {
-        if (type === 'artist') {
-          filters.artists = filters.artists.filter(a => a.value !== value);
-          document.getElementById('artist-filter').value = rebuildFilterInput(filters.artists);
-        } else if (type === 'album') {
-          filters.albums = filters.albums.filter(a => a.value !== value);
-          document.getElementById('album-filter').value = rebuildFilterInput(filters.albums);
-        } else if (type === 'genre') {
-          filters.genres = filters.genres.filter(g => g.value !== value);
-          document.getElementById('genre-filter').value = rebuildFilterInput(filters.genres);
-        } else if (type === 'track') {
-          filters.trackName = filters.trackName.filter(t => t.value !== value);
-          document.getElementById('track-filter').value = rebuildFilterInput(filters.trackName);
-        }
-        filterTracks();
-      }
-
-      function rebuildFilterInput(terms) {
-        return terms.map(t => t.exact ? `"${t.value}"` : t.value).join(', ');
-      }
-
-      // Event listeners
-      document.getElementById('artist-filter').addEventListener('input', (e) => {
-        filters.artists = parseFilterInput(e.target.value);
-        filterTracks();
-      });
-
-      document.getElementById('album-filter').addEventListener('input', (e) => {
-        filters.albums = parseFilterInput(e.target.value);
-        filterTracks();
-      });
-
-      document.getElementById('genre-filter').addEventListener('input', (e) => {
-        filters.genres = parseFilterInput(e.target.value);
-        filterTracks();
-      });
-
-      document.getElementById('track-filter').addEventListener('input', (e) => {
-        filters.trackName = parseFilterInput(e.target.value);
-        filterTracks();
-      });
-
-      document.getElementById('clear-filters').addEventListener('click', () => {
-        filters = { artists: [], albums: [], genres: [], trackName: [] };
-        document.getElementById('artist-filter').value = '';
-        document.getElementById('album-filter').value = '';
-        document.getElementById('genre-filter').value = '';
-        document.getElementById('track-filter').value = '';
-        filterTracks();
-      });
-
-      // Initialize
-      filterTracks();
+      // Initialize playlist creator
+      initializePlaylistCreator(userId);
 
       // Genre editing functions
       function editGenres(event, trackId) {
@@ -517,106 +315,6 @@
         }
       }
 
-      // Create playlist from filtered results
-      document.getElementById('save-filtered-playlist').addEventListener('click', () => {
-        openCreatePlaylistModal();
-      });
-
-      function openCreatePlaylistModal() {
-        const modal = document.getElementById('create-playlist-modal');
-        const visibleTracks = getVisibleTracks();
-        
-        if (visibleTracks.length === 0) {
-          alert('No tracks to save. Please adjust your filters.');
-          return;
-        }
-        
-        const countDisplay = document.getElementById('track-count-display');
-        countDisplay.textContent = `This will create a playlist with ${visibleTracks.length} track${visibleTracks.length !== 1 ? 's' : ''}.`;
-        
-        modal.classList.remove('hidden');
-      }
-
-      function closeCreatePlaylistModal() {
-        const modal = document.getElementById('create-playlist-modal');
-        modal.classList.add('hidden');
-        document.getElementById('create-playlist-form').reset();
-      }
-
-      function getVisibleTracks() {
-        const trackItems = document.querySelectorAll('.track-item');
-        const visibleTrackIds = [];
-        
-        trackItems.forEach((item, index) => {
-          if (item.style.display !== 'none') {
-            const track = tracks[index];
-            if (track && track.track && track.track.id) {
-              visibleTrackIds.push(track.track.id);
-            }
-          }
-        });
-        
-        return visibleTrackIds;
-      }
-
-      document.getElementById('create-playlist-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('playlist-name').value.trim();
-        const description = document.getElementById('playlist-description').value.trim();
-        const visibleTrackIds = getVisibleTracks();
-        
-        if (!name) {
-          alert('Please enter a playlist name.');
-          return;
-        }
-        
-        if (visibleTrackIds.length === 0) {
-          alert('No tracks to save.');
-          return;
-        }
-        
-        // Get userId from session (passed from server)
-        const userId = '<%= userId %>';
-        
-        if (!userId) {
-          alert('User not logged in. Please refresh the page.');
-          return;
-        }
-        
-        try {
-          showLoadingOverlay();
-          
-          const response = await fetch('/api/playlists/create-local', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              name,
-              description: description || null,
-              trackIds: visibleTrackIds,
-              userId
-            })
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            console.log('Playlist created:', result);
-            
-            // Redirect to the new playlist
-            window.location.href = '/playlists/' + result.playlistId;
-          } else {
-            const error = await response.json();
-            alert('Failed to create playlist: ' + (error.error || 'Unknown error'));
-            document.getElementById('loading-overlay').classList.add('hidden');
-          }
-        } catch (error) {
-          console.error('Failed to create playlist:', error);
-          alert('Failed to create playlist. Please try again.');
-          document.getElementById('loading-overlay').classList.add('hidden');
-        }
-      });
     </script>
 </body>
 
