@@ -37,9 +37,17 @@ app.use((req, res, next) => {
 // import routes
 const authRoutes = require("./routes/auth")
 const userRoutes = require("./routes/user")
-const playRoutes = require("./routes/playlists")
 const likedSongsRoutes = require("./routes/liked-songs")
-const apiRoutes = require("./routes/api")
+
+// Split playlist routes
+const playlistIndexRoutes = require("./routes/playlists/index")
+const playlistCreateRoutes = require("./routes/playlists/create")
+
+// Split API routes
+const apiTracksRoutes = require("./routes/api/tracks")
+const apiPlaylistsRoutes = require("./routes/api/playlists")
+const apiPendingChangesRoutes = require("./routes/api/pending-changes")
+
 const errorHandler = require("./middleware/errorHandler")
 
 // landing page
@@ -48,12 +56,19 @@ app.get('/', (req, res) => {
   res.render("index.ejs")
 })
 
-// import routes
+// use routes
 app.use("/", authRoutes)
 app.use("/", userRoutes)
-app.use("/", playRoutes)
 app.use("/", likedSongsRoutes)
-app.use("/", apiRoutes)
+
+// Playlist routes (split)
+app.use("/", playlistIndexRoutes)
+app.use("/", playlistCreateRoutes)
+
+// API routes (split)
+app.use("/", apiTracksRoutes)
+app.use("/", apiPlaylistsRoutes)
+app.use("/", apiPendingChangesRoutes)
 
 // error handling middleware (must be last)
 app.use(errorHandler)

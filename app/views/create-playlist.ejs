@@ -156,13 +156,7 @@
 </head>
 
 <body class="lava">
-  <!-- Loading overlay -->
-  <div id="loading-overlay" class="loading-overlay hidden">
-    <div style="text-align: center;">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Creating playlist...</div>
-    </div>
-  </div>
+  <%- include("./components/modals/loading-overlay") %>
 
   <%- include("./components/header") %>
 
@@ -175,11 +169,11 @@
           <h2>Playlist Details</h2>
           <div class="form-group">
             <label for="playlist-name">Playlist Name *</label>
-            <input type="text" id="playlist-name" name="name" required placeholder="My Awesome Playlist">
+            <input type="text" id="playlist-name" name="name" required placeholder="My Super Cool Playlist">
           </div>
           <div class="form-group">
             <label for="playlist-description">Description (optional)</label>
-            <textarea id="playlist-description" name="description" rows="3" placeholder="A collection of my favorite tracks"></textarea>
+            <textarea id="playlist-description" name="description" rows="3" placeholder="Description goes here."></textarea>
           </div>
         </div>
 
@@ -192,22 +186,22 @@
           
           <div class="form-group">
             <label for="artist-filter">Artist</label>
-            <input type="text" id="artist-filter" name="artist" placeholder='e.g., "Taylor Swift", Ed Sheeran'>
+            <input type="text" id="artist-filter" name="artist" placeholder='artist 1, artist 2, "exact artist name", etc.'>
           </div>
 
           <div class="form-group">
             <label for="genre-filter">Genre</label>
-            <input type="text" id="genre-filter" name="genre" placeholder='e.g., pop, rock'>
+            <input type="text" id="genre-filter" name="genre" placeholder='genre 1, genre 2, "exact genre", etc.'>
           </div>
 
           <div class="form-group">
             <label for="album-filter">Album</label>
-            <input type="text" id="album-filter" name="album" placeholder='e.g., "1989"'>
+            <input type="text" id="album-filter" name="album" placeholder='album 1, album 2, "exact album name", etc.'>
           </div>
 
           <div class="form-group">
             <label for="track-filter">Track Name</label>
-            <input type="text" id="track-filter" name="trackName" placeholder='e.g., love'>
+            <input type="text" id="track-filter" name="trackName" placeholder='track name 1, track name 2, "exact track name", etc.'>
           </div>
 
           <div class="button-group">
