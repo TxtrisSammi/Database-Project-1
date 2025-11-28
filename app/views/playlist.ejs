@@ -7,6 +7,7 @@
   <link rel="stylesheet" type="" href="/css/style.css">
   <link rel="stylesheet" type="" href="/css/playlist.css">
   <link rel="stylesheet" type="" href="/css/loading.css">
+  <script src="/js/pending-changes.js"></script>
   <title>
     <%= playlist ? playlist.name : 'Playlist' %>
   </title>
@@ -19,6 +20,30 @@
       <div class="loading-spinner"></div>
       <div class="loading-text">Loading...</div>
       <div class="loading-warning">If this is a large playlist, this may take a while. Please be patient.</div>
+    </div>
+  </div>
+
+  <!-- Modal for creating new playlist -->
+  <div id="create-playlist-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Create New Playlist</h2>
+      <form id="create-playlist-form">
+        <div class="form-group">
+          <label for="playlist-name">Playlist Name *</label>
+          <input type="text" id="playlist-name" required placeholder="My Filtered Playlist">
+        </div>
+        <div class="form-group">
+          <label for="playlist-description">Description (optional)</label>
+          <textarea id="playlist-description" rows="3" placeholder="Created from filtered tracks"></textarea>
+        </div>
+        <div class="form-group">
+          <p id="track-count-display"></p>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="save-btn">Create Playlist</button>
+          <button type="button" class="cancel-btn" onclick="closeCreatePlaylistModal()">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -102,6 +127,7 @@
           </div>
           <div id="filter-chips"></div>
           <div id="filter-count"></div>
+          <button id="save-filtered-playlist" class="save-playlist-btn">Save Filtered Results as New Playlist</button>
         </div>
         
         <h2>Tracks</h2>
@@ -200,7 +226,7 @@
         artists: [],
         albums: [],
         genres: [],
-        trackName: ''
+        trackName: []
       };
 
       function parseFilterInput(input) {
@@ -561,6 +587,107 @@
           alert('Failed to remove track. Please try again.');
         }
       }
+
+      // Create playlist from filtered results
+      document.getElementById('save-filtered-playlist').addEventListener('click', () => {
+        openCreatePlaylistModal();
+      });
+
+      function openCreatePlaylistModal() {
+        const modal = document.getElementById('create-playlist-modal');
+        const visibleTracks = getVisibleTracks();
+        
+        if (visibleTracks.length === 0) {
+          alert('No tracks to save. Please adjust your filters.');
+          return;
+        }
+        
+        const countDisplay = document.getElementById('track-count-display');
+        countDisplay.textContent = `This will create a playlist with ${visibleTracks.length} track${visibleTracks.length !== 1 ? 's' : ''}.`;
+        
+        modal.classList.remove('hidden');
+      }
+
+      function closeCreatePlaylistModal() {
+        const modal = document.getElementById('create-playlist-modal');
+        modal.classList.add('hidden');
+        document.getElementById('create-playlist-form').reset();
+      }
+
+      function getVisibleTracks() {
+        const trackItems = document.querySelectorAll('.track-item');
+        const visibleTrackIds = [];
+        
+        trackItems.forEach((item, index) => {
+          if (item.style.display !== 'none') {
+            const track = tracks[index];
+            if (track && track.track && track.track.id) {
+              visibleTrackIds.push(track.track.id);
+            }
+          }
+        });
+        
+        return visibleTrackIds;
+      }
+
+      document.getElementById('create-playlist-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('playlist-name').value.trim();
+        const description = document.getElementById('playlist-description').value.trim();
+        const visibleTrackIds = getVisibleTracks();
+        
+        if (!name) {
+          alert('Please enter a playlist name.');
+          return;
+        }
+        
+        if (visibleTrackIds.length === 0) {
+          alert('No tracks to save.');
+          return;
+        }
+        
+        // Get userId from session (passed from server)
+        const userId = '<%= userId %>';
+        
+        if (!userId) {
+          alert('User not logged in. Please refresh the page.');
+          return;
+        }
+        
+        try {
+          showLoadingOverlay();
+          
+          const response = await fetch('/api/playlists/create-local', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name,
+              description: description || null,
+              trackIds: visibleTrackIds,
+              userId
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log('Playlist created:', result);
+            
+            // Redirect to the new playlist
+            window.location.href = '/playlists/' + result.playlistId;
+          } else {
+            const error = await response.json();
+            alert('Failed to create playlist: ' + (error.error || 'Unknown error'));
+            document.getElementById('loading-overlay').classList.add('hidden');
+          }
+        } catch (error) {
+          console.error('Failed to create playlist:', error);
+          alert('Failed to create playlist. Please try again.');
+          document.getElementById('loading-overlay').classList.add('hidden');
+        }
+      });
     </script>
 </body>
 

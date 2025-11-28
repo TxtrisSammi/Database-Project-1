@@ -59,7 +59,12 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
     console.log('[PLAYLIST] Rendering playlist page with DB data')
     console.log('[PLAYLIST] Playlist:', playlist ? playlist.name : 'No data')
     console.log('[PLAYLIST] Tracks:', tracks.length)
-    res.render("playlist.ejs", { playlist: playlist, tracks: tracks, genres: genres })
+    res.render("playlist.ejs", { 
+      playlist: playlist, 
+      tracks: tracks, 
+      genres: genres,
+      userId: req.session.userId || ''
+    })
 
   } catch (error) {
     console.error('[PLAYLIST] Error in /playlists/:id route:', error.message)
@@ -81,7 +86,13 @@ app.post("/playlists/:id/refresh", validatePlaylistId, async (req, res, next) =>
 
     // First, process pending changes
     console.log('[PLAYLIST] Checking for pending changes...')
-    await processPendingChanges(id, token)
+    const result = await processPendingChanges(id, token)
+    
+    // If playlist was created in Spotify, redirect to home so user can refresh
+    if (result && result.redirectToHome) {
+      console.log('[PLAYLIST] Playlist created in Spotify, redirecting to home')
+      return res.redirect('/user')
+    }
 
     // console.log('[PLAYLIST] Fetching playlist info for ID:', id)
     let playlist = await getPlaylistInfo(token, id)
@@ -104,6 +115,112 @@ app.post("/playlists/:id/refresh", validatePlaylistId, async (req, res, next) =>
   } catch (error) {
     console.error('[PLAYLIST] Error in /playlists/:id/refresh route:', error.message)
     next(error)
+  }
+})
+
+app.get("/create-playlist", async (req, res, next) => {
+  console.log('[PLAYLIST] /create-playlist - Rendering create playlist page')
+  try {
+    res.render("create-playlist.ejs", { 
+      userId: req.session.userId || ''
+    })
+  } catch (error) {
+    console.error('[PLAYLIST] Error in /create-playlist route:', error.message)
+    next(error)
+  }
+})
+
+app.post("/create-playlist/preview", async (req, res, next) => {
+  console.log('[PLAYLIST] /create-playlist/preview - Previewing tracks')
+  try {
+    const { artist, genre, album, trackName } = req.body
+    
+    const tracks = await searchTracks({ artist, genre, album, trackName })
+    
+    res.json({ success: true, tracks, count: tracks.length })
+  } catch (error) {
+    console.error('[PLAYLIST] Error in /create-playlist/preview route:', error.message)
+    res.status(500).json({ error: "Failed to preview tracks" })
+  }
+})
+
+app.post("/create-playlist", async (req, res, next) => {
+  console.log('[PLAYLIST] /create-playlist - Creating new playlist')
+  try {
+    const { name, description, trackIds, userId } = req.body
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: "Playlist name is required" })
+    }
+    
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" })
+    }
+    
+    // Create local playlist (reuse existing logic from API route)
+    const newConnection = require('../db/connection')
+    const con = newConnection()
+    
+    const uuid = require('crypto').randomUUID().substring(0, 8)
+    const timestamp = Date.now()
+    const playlistId = `local_${uuid}_${timestamp}`
+    
+    // Create playlist
+    await new Promise((resolve, reject) => {
+      const query = `
+        INSERT INTO Playlist (PlaylistId, PlaylistName, PlaylistDescription, ImageURL, UserId, IsLocalOnly) 
+        VALUES (?, ?, ?, NULL, ?, TRUE)
+      `
+      
+      con.query(query, [playlistId, name.trim(), description?.trim() || null, userId], (err, result) => {
+        if (err) {
+          console.error('[PLAYLIST] Error creating playlist:', err.message)
+          reject(err)
+        } else {
+          resolve(result)
+        }
+      })
+    })
+    
+    // Add tracks to playlist
+    if (trackIds && trackIds.length > 0) {
+      for (const trackId of trackIds) {
+        await new Promise((resolve, reject) => {
+          const query = "INSERT INTO PlaylistTrack (TrackId, PlaylistId) VALUES (?, ?)"
+          
+          con.query(query, [trackId, playlistId], (err, result) => {
+            if (err) {
+              console.error('[PLAYLIST] Error adding track:', err.message)
+              reject(err)
+            } else {
+              resolve(result)
+            }
+          })
+        })
+      }
+    }
+    
+    // Create pending change
+    await new Promise((resolve, reject) => {
+      const query = "INSERT INTO PendingChanges (PlaylistId, PlaylistName, TrackId, TrackName, UserId, ChangeType) VALUES (?, ?, NULL, NULL, ?, 'CREATE_PLAYLIST')"
+      
+      con.query(query, [playlistId, name.trim(), userId], (err, result) => {
+        if (err) {
+          console.error('[PLAYLIST] Error creating pending change:', err.message)
+          reject(err)
+        } else {
+          resolve(result)
+        }
+      })
+    })
+    
+    con.end()
+    console.log('[PLAYLIST] Playlist created successfully:', playlistId)
+    res.json({ success: true, playlistId })
+    
+  } catch (error) {
+    console.error('[PLAYLIST] Error in /create-playlist route:', error.message)
+    res.status(500).json({ error: "Failed to create playlist" })
   }
 })
 
@@ -261,7 +378,7 @@ async function processPendingChanges(playlistId, token) {
 
   return new Promise((resolve, reject) => {
     // Get pending changes for this playlist
-    const query = "SELECT * FROM PendingChanges WHERE PlaylistId = ? AND ChangeType = 'REMOVE_TRACK'"
+    const query = "SELECT * FROM PendingChanges WHERE PlaylistId = ? AND ChangeType IN ('REMOVE_TRACK', 'CREATE_PLAYLIST')"
 
     con.query(query, [playlistId], async (err, results) => {
       if (err) {
@@ -278,10 +395,52 @@ async function processPendingChanges(playlistId, token) {
         return
       }
 
-      console.log('[PLAYLIST] Found', results.length, 'pending track removals')
+      console.log('[PLAYLIST] Found', results.length, 'pending changes')
 
-      // Process each removal
-      for (const change of results) {
+      // Check if we need to create the playlist in Spotify first
+      const createPlaylistChange = results.find(c => c.ChangeType === 'CREATE_PLAYLIST')
+      
+      if (createPlaylistChange) {
+        try {
+          console.log('[PLAYLIST] Creating playlist in Spotify for local playlist:', playlistId)
+          const newSpotifyId = await createPlaylistInSpotify(playlistId, token, con)
+          
+          if (newSpotifyId) {
+            console.log('[PLAYLIST] Successfully created in Spotify with ID:', newSpotifyId)
+            
+            // Delete the local playlist and pending change
+            await new Promise((resolve2, reject2) => {
+              con.query('DELETE FROM PendingChanges WHERE ChangeId = ?', [createPlaylistChange.ChangeId], (err2) => {
+                if (err2) reject2(err2)
+                else resolve2()
+              })
+            })
+            
+            // Delete the local playlist (this will be replaced by the Spotify sync)
+            await new Promise((resolve2, reject2) => {
+              con.query('DELETE FROM Playlist WHERE PlaylistId = ?', [playlistId], (err2) => {
+                if (err2) reject2(err2)
+                else resolve2()
+              })
+            })
+            
+            con.end()
+            console.log('[PLAYLIST] Local playlist deleted, user should refresh to see Spotify version')
+            resolve({ redirectToHome: true })
+            return
+          }
+        } catch (error) {
+          console.error('[PLAYLIST] Error creating playlist in Spotify:', error.message)
+          con.end()
+          reject(error)
+          return
+        }
+      }
+
+      // Process track removals
+      const trackRemovals = results.filter(c => c.ChangeType === 'REMOVE_TRACK')
+      
+      for (const change of trackRemovals) {
         try {
           console.log('[PLAYLIST] Removing track', change.TrackId, 'from Spotify playlist')
 
@@ -300,8 +459,6 @@ async function processPendingChanges(playlistId, token) {
           })
 
           if (response.ok) {
-            // console.log('[PLAYLIST] Successfully removed track from Spotify')
-
             // Delete the pending change record
             await new Promise((resolve2, reject2) => {
               con.query('DELETE FROM PendingChanges WHERE ChangeId = ?', [change.ChangeId], (err2) => {
@@ -318,10 +475,221 @@ async function processPendingChanges(playlistId, token) {
       }
 
       con.end()
-      // console.log('[PLAYLIST] Finished processing pending changes')
+      console.log('[PLAYLIST] Finished processing pending changes')
       resolve()
     })
   })
+}
+
+async function createPlaylistInSpotify(localPlaylistId, token, con) {
+  // Get playlist details from database
+  const playlist = await new Promise((resolve, reject) => {
+    con.query('SELECT * FROM Playlist WHERE PlaylistId = ?', [localPlaylistId], (err, results) => {
+      if (err) reject(err)
+      else resolve(results[0])
+    })
+  })
+
+  if (!playlist) {
+    throw new Error('Local playlist not found')
+  }
+
+  // Get user ID from session (we'll need to get this from the playlist)
+  const userId = playlist.UserId
+
+  // Create playlist in Spotify
+  const createResponse = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: playlist.PlaylistName,
+      description: playlist.PlaylistDescription || '',
+      public: false
+    })
+  })
+
+  if (!createResponse.ok) {
+    throw new Error(`Failed to create playlist in Spotify: ${createResponse.status}`)
+  }
+
+  const newPlaylist = await createResponse.json()
+  console.log('[PLAYLIST] Created playlist in Spotify:', newPlaylist.id)
+
+  // Get tracks from local playlist
+  const tracks = await new Promise((resolve, reject) => {
+    con.query('SELECT TrackId FROM PlaylistTrack WHERE PlaylistId = ?', [localPlaylistId], (err, results) => {
+      if (err) reject(err)
+      else resolve(results)
+    })
+  })
+
+  // Add tracks to Spotify playlist (in batches of 100)
+  if (tracks.length > 0) {
+    const trackUris = tracks.map(t => `spotify:track:${t.TrackId}`)
+    
+    for (let i = 0; i < trackUris.length; i += 100) {
+      const batch = trackUris.slice(i, i + 100)
+      
+      const addTracksResponse = await fetch(`https://api.spotify.com/v1/playlists/${newPlaylist.id}/tracks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          uris: batch
+        })
+      })
+
+      if (!addTracksResponse.ok) {
+        console.error('[PLAYLIST] Failed to add tracks batch to Spotify playlist')
+      }
+    }
+  }
+
+  return newPlaylist.id
+}
+
+async function searchTracks(filters) {
+  const newConnection = require('../db/connection')
+  const con = newConnection()
+  
+  return new Promise((resolve, reject) => {
+    let whereClauses = []
+    let havingClauses = []
+    let params = []
+    
+    // Build WHERE and HAVING clauses based on filters
+    
+    // Album filter (direct on Track table)
+    if (filters.album && filters.album.trim()) {
+      const albumTerms = parseFilterInput(filters.album)
+      if (albumTerms.length > 0) {
+        const albumConditions = albumTerms.map(term => {
+          if (term.exact) {
+            params.push(term.value)
+            return 't.Album = ?'
+          } else {
+            params.push(`%${term.value}%`)
+            return 't.Album LIKE ?'
+          }
+        })
+        whereClauses.push(`(${albumConditions.join(' OR ')})`)
+      }
+    }
+    
+    // Track name filter (direct on Track table)
+    if (filters.trackName && filters.trackName.trim()) {
+      const trackTerms = parseFilterInput(filters.trackName)
+      if (trackTerms.length > 0) {
+        const trackConditions = trackTerms.map(term => {
+          if (term.exact) {
+            params.push(term.value)
+            return 't.TrackName = ?'
+          } else {
+            params.push(`%${term.value}%`)
+            return 't.TrackName LIKE ?'
+          }
+        })
+        whereClauses.push(`(${trackConditions.join(' OR ')})`)
+      }
+    }
+    
+    // Artist filter (on aggregated data)
+    if (filters.artist && filters.artist.trim()) {
+      const artistTerms = parseFilterInput(filters.artist)
+      if (artistTerms.length > 0) {
+        const artistConditions = artistTerms.map(term => {
+          if (term.exact) {
+            params.push(`%${term.value}%`)
+            return 'Artists LIKE ?'
+          } else {
+            params.push(`%${term.value}%`)
+            return 'Artists LIKE ?'
+          }
+        })
+        havingClauses.push(`(${artistConditions.join(' OR ')})`)
+      }
+    }
+    
+    // Genre filter (on aggregated data)
+    if (filters.genre && filters.genre.trim()) {
+      const genreTerms = parseFilterInput(filters.genre)
+      if (genreTerms.length > 0) {
+        const genreConditions = genreTerms.map(term => {
+          if (term.exact) {
+            params.push(`%${term.value}%`)
+            return 'Genres LIKE ?'
+          } else {
+            params.push(`%${term.value}%`)
+            return 'Genres LIKE ?'
+          }
+        })
+        havingClauses.push(`(${genreConditions.join(' OR ')})`)
+      }
+    }
+    
+    const whereClause = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : ''
+    const havingClause = havingClauses.length > 0 ? 'HAVING ' + havingClauses.join(' AND ') : ''
+    
+    const query = `
+      SELECT DISTINCT 
+        t.TrackId,
+        t.TrackName,
+        t.Album,
+        t.AlbumImageURL,
+        t.DurationMs,
+        GROUP_CONCAT(DISTINCT a.ArtistName SEPARATOR ', ') as Artists,
+        GROUP_CONCAT(DISTINCT a.ArtistId SEPARATOR ',') as ArtistIds,
+        GROUP_CONCAT(DISTINCT ag.TrackGenre SEPARATOR ', ') as Genres
+      FROM Track t
+      LEFT JOIN TrackArtist ta ON t.TrackId = ta.TrackId
+      LEFT JOIN Artist a ON ta.ArtistId = a.ArtistId
+      LEFT JOIN ArtistGenre ag ON t.TrackId = ag.TrackId
+      ${whereClause}
+      GROUP BY t.TrackId, t.TrackName, t.Album, t.AlbumImageURL, t.DurationMs
+      ${havingClause}
+      ORDER BY t.TrackName
+    `
+    
+    console.log('[PLAYLIST] Search query:', query)
+    console.log('[PLAYLIST] Search params:', params)
+    
+    con.query(query, params, (err, results) => {
+      con.end()
+      if (err) {
+        console.error('[PLAYLIST] Error searching tracks:', err.message)
+        reject(err)
+      } else {
+        console.log('[PLAYLIST] Found', results.length, 'matching tracks')
+        resolve(results)
+      }
+    })
+  })
+}
+
+function parseFilterInput(input) {
+  if (!input) return []
+  
+  const terms = []
+  const regex = /"([^"]*)"|([^,]+)/g
+  let match
+  
+  while ((match = regex.exec(input)) !== null) {
+    const term = match[1] || match[2]
+    if (term && term.trim()) {
+      const trimmed = term.trim().toLowerCase()
+      terms.push({
+        value: trimmed,
+        exact: !!match[1]
+      })
+    }
+  }
+  
+  return terms
 }
 
 module.exports = app

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="" href="/css/style.css">
+  <link rel="stylesheet" type="" href="/css/playlist.css">
+  <link rel="stylesheet" type="" href="/css/loading.css">
+  <script src="/js/pending-changes.js"></script>
+  <title>Create New Playlist</title>
+  <style>
+    .create-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .form-section {
+      margin-bottom: 2rem;
+    }
+
+    .form-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--active);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--bg-light);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid var(--bg-accent);
+      border-radius: 5px;
+      background-color: var(--bg-dark);
+      color: white;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .preview-btn,
+    .create-btn,
+    .clear-btn {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .preview-btn {
+      background: linear-gradient(135deg, var(--inactive), var(--active));
+      color: white;
+    }
+
+    .create-btn {
+      background: linear-gradient(135deg, #28a745, #20833a);
+      color: white;
+    }
+
+    .clear-btn {
+      background: var(--bg-accent);
+      color: white;
+    }
+
+    .preview-btn:hover,
+    .create-btn:hover,
+    .clear-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .preview-section {
+      margin-top: 2rem;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .track-preview-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .track-preview-item {
+      background-color: var(--bg-accent);
+      padding: 1rem;
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .track-preview-item img {
+      border-radius: 3px;
+    }
+
+    .track-preview-info {
+      flex: 1;
+    }
+
+    .track-preview-name {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .track-preview-meta {
+      font-size: 0.85rem;
+      color: var(--bg-light);
+    }
+
+    .empty-preview {
+      text-align: center;
+      padding: 3rem;
+      color: var(--bg-light);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body class="lava">
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div style="text-align: center;">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Creating playlist...</div>
+    </div>
+  </div>
+
+  <%- include("./components/header") %>
+
+  <main class="flex">
+    <div class="window create-container">
+      <h1>Create New Playlist</h1>
+
+      <form id="create-playlist-form">
+        <div class="form-section">
+          <h2>Playlist Details</h2>
+          <div class="form-group">
+            <label for="playlist-name">Playlist Name *</label>
+            <input type="text" id="playlist-name" name="name" required placeholder="My Awesome Playlist">
+          </div>
+          <div class="form-group">
+            <label for="playlist-description">Description (optional)</label>
+            <textarea id="playlist-description" name="description" rows="3" placeholder="A collection of my favorite tracks"></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h2>Search Criteria</h2>
+          <p style="color: var(--bg-light); margin-bottom: 1rem;">
+            Use quotes for exact match. Use commas to separate multiple values (OR logic).
+            Leave blank to include all tracks.
+          </p>
+          
+          <div class="form-group">
+            <label for="artist-filter">Artist</label>
+            <input type="text" id="artist-filter" name="artist" placeholder='e.g., "Taylor Swift", Ed Sheeran'>
+          </div>
+
+          <div class="form-group">
+            <label for="genre-filter">Genre</label>
+            <input type="text" id="genre-filter" name="genre" placeholder='e.g., pop, rock'>
+          </div>
+
+          <div class="form-group">
+            <label for="album-filter">Album</label>
+            <input type="text" id="album-filter" name="album" placeholder='e.g., "1989"'>
+          </div>
+
+          <div class="form-group">
+            <label for="track-filter">Track Name</label>
+            <input type="text" id="track-filter" name="trackName" placeholder='e.g., love'>
+          </div>
+
+          <div class="button-group">
+            <button type="button" class="preview-btn" id="preview-btn">Preview Results</button>
+            <button type="button" class="clear-btn" id="clear-btn">Clear Filters</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="preview-section" class="preview-section hidden">
+        <div class="preview-header">
+          <h2>Preview Results (<span id="track-count">0</span> tracks)</h2>
+          <button type="button" class="create-btn" id="create-btn">Create Playlist</button>
+        </div>
+        
+        <ul id="preview-list" class="track-preview-list"></ul>
+      </div>
+    </div>
+  </main>
+
+  <%- include("./components/footer") %>
+
+  <script>
+    const userId = '<%= userId %>';
+    let currentTracks = [];
+
+    document.getElementById('preview-btn').addEventListener('click', async () => {
+      const artist = document.getElementById('artist-filter').value;
+      const genre = document.getElementById('genre-filter').value;
+      const album = document.getElementById('album-filter').value;
+      const trackName = document.getElementById('track-filter').value;
+
+      try {
+        const response = await fetch('/create-playlist/preview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ artist, genre, album, trackName })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          currentTracks = data.tracks;
+          displayPreview(data.tracks, data.count);
+        } else {
+          alert('Failed to preview tracks');
+        }
+      } catch (error) {
+        console.error('Error previewing tracks:', error);
+        alert('Failed to preview tracks');
+      }
+    });
+
+    function displayPreview(tracks, count) {
+      const previewSection = document.getElementById('preview-section');
+      const trackCountEl = document.getElementById('track-count');
+      const previewList = document.getElementById('preview-list');
+
+      trackCountEl.textContent = count;
+      previewSection.classList.remove('hidden');
+
+      if (tracks.length === 0) {
+        previewList.innerHTML = '<div class="empty-preview">No tracks found. Try different criteria or create an empty playlist.</div>';
+        return;
+      }
+
+      previewList.innerHTML = tracks.map(track => {
+        const artists = track.Artists || 'Unknown Artist';
+        const album = track.Album || 'Unknown Album';
+        const genres = track.Genres || 'No genres';
+        const imageUrl = track.AlbumImageURL || '/media/missing.jpg';
+
+        return `
+          <li class="track-preview-item">
+            <img src="${imageUrl}" alt="${track.TrackName}" width="48" height="48">
+            <div class="track-preview-info">
+              <div class="track-preview-name">${track.TrackName}</div>
+              <div class="track-preview-meta">${artists} • ${album} • ${genres}</div>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('create-btn').addEventListener('click', async () => {
+      const name = document.getElementById('playlist-name').value.trim();
+      const description = document.getElementById('playlist-description').value.trim();
+
+      if (!name) {
+        alert('Please enter a playlist name');
+        return;
+      }
+
+      if (!userId) {
+        alert('You must be logged in to create a playlist');
+        return;
+      }
+
+      const trackIds = currentTracks.map(t => t.TrackId);
+
+      try {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+
+        const response = await fetch('/create-playlist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            description: description || null,
+            trackIds,
+            userId
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          window.location.href = '/playlists/' + data.playlistId;
+        } else {
+          const error = await response.json();
+          alert('Failed to create playlist: ' + (error.error || 'Unknown error'));
+          document.getElementById('loading-overlay').classList.add('hidden');
+        }
+      } catch (error) {
+        console.error('Error creating playlist:', error);
+        alert('Failed to create playlist');
+        document.getElementById('loading-overlay').classList.add('hidden');
+      }
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      document.getElementById('artist-filter').value = '';
+      document.getElementById('genre-filter').value = '';
+      document.getElementById('album-filter').value = '';
+      document.getElementById('track-filter').value = '';
+      document.getElementById('preview-section').classList.add('hidden');
+      currentTracks = [];
+    });
+  </script>
+</body>
+
+</html>
