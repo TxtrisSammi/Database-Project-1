@@ -44,7 +44,11 @@ app.get("/liked-songs", async (req, res, next) => {
 
     console.log('[LIKED-SONGS] Rendering liked-songs page with DB data')
     console.log('[LIKED-SONGS] Tracks:', tracks.length)
-    res.render("liked-songs.ejs", { tracks: tracks, genres: genres })
+    res.render("liked-songs.ejs", { 
+      tracks: tracks, 
+      genres: genres,
+      userId: req.session.userId || ''
+    })
   } catch (error) {
     console.error('[LIKED-SONGS] Error in /liked-songs route:', error.message)
     next(error)

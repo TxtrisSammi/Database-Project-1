@@ -149,6 +149,7 @@ async function createAll() {
       PlaylistDescription VARCHAR(1000),
       ImageURL VARCHAR(500),
       UserId VARCHAR(255),
+      IsLocalOnly BOOLEAN DEFAULT FALSE,
       LastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (UserId) REFERENCES User(UserId)
         ON UPDATE CASCADE ON DELETE CASCADE
@@ -171,8 +172,11 @@ async function createAll() {
     CREATE TABLE IF NOT EXISTS PendingChanges (
       ChangeId INT AUTO_INCREMENT PRIMARY KEY,
       PlaylistId VARCHAR(255),
+      PlaylistName VARCHAR(255),
       TrackId VARCHAR(255) NULL,
-      ChangeType ENUM('REMOVE_TRACK', 'DELETE_PLAYLIST') DEFAULT 'REMOVE_TRACK',
+      TrackName VARCHAR(255) NULL,
+      UserId VARCHAR(255),
+      ChangeType ENUM('REMOVE_TRACK', 'DELETE_PLAYLIST', 'CREATE_PLAYLIST') DEFAULT 'REMOVE_TRACK',
       CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
   `;
@@ -182,8 +186,22 @@ async function createAll() {
     AFTER DELETE ON PlaylistTrack
     FOR EACH ROW
     BEGIN
-      INSERT INTO PendingChanges (PlaylistId, TrackId, ChangeType)
-      VALUES (OLD.PlaylistId, OLD.TrackId, 'REMOVE_TRACK');
+      DECLARE playlist_user_id VARCHAR(255);
+      DECLARE playlist_name VARCHAR(255);
+      DECLARE track_name VARCHAR(255);
+      
+      SELECT UserId, PlaylistName INTO playlist_user_id, playlist_name
+      FROM Playlist 
+      WHERE PlaylistId = OLD.PlaylistId 
+      LIMIT 1;
+      
+      SELECT TrackName INTO track_name
+      FROM Track
+      WHERE TrackId = OLD.TrackId
+      LIMIT 1;
+      
+      INSERT INTO PendingChanges (PlaylistId, PlaylistName, TrackId, TrackName, UserId, ChangeType)
+      VALUES (OLD.PlaylistId, playlist_name, OLD.TrackId, track_name, playlist_user_id, 'REMOVE_TRACK');
     END;
   `;
 

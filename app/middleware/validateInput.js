@@ -8,7 +8,8 @@ function validatePlaylistId(req, res, next) {
   }
   
   // spotify ids are typically 22 characters alphanumeric
-  if (id.length > 30 || !/^[a-zA-Z0-9]+$/.test(id)) {
+  // local playlist ids use format: local_<uuid>_<timestamp>
+  if (id.length > 60 || !/^[a-zA-Z0-9_]+$/.test(id)) {
     return res.status(400).redirect("/user")
   }
   
