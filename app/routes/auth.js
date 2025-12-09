@@ -77,26 +77,41 @@ app.get("/callback", async (req, res) => {
 
   // Fetch user ID and store in session
   try {
-    // console.log('[AUTH] Fetching user ID from Spotify')
+    console.log('[AUTH] Fetching user ID from Spotify')
     const userResponse = await fetch("https://api.spotify.com/v1/me", {
       headers: {
         Authorization: "Bearer " + accessToken
       }
     })
 
+    console.log('[AUTH] User fetch response status:', userResponse.status)
+    
     if (userResponse.ok) {
       const userData = await userResponse.json()
+      console.log('[AUTH] User data received:', userData ? 'yes' : 'no', 'Has ID:', !!userData?.id)
       if (userData && userData.id) {
         req.session.userId = userData.id
         console.log('[AUTH] User ID stored in session:', userData.id)
+      } else {
+        console.error('[AUTH] No user ID in response data')
       }
+    } else {
+      console.error('[AUTH] Failed to fetch user - Status:', userResponse.status)
+      const errorText = await userResponse.text()
+      console.error('[AUTH] Error response:', errorText)
     }
   } catch (error) {
-    console.error('[AUTH] Failed to fetch user ID:', error.message)
+    console.error('[AUTH] Exception fetching user ID:', error.message)
   }
 
   // console.log('[AUTH] Tokens stored in session, redirecting to /user')
-  res.redirect("/user")
+  req.session.save((err) => {
+    if (err) {
+      console.error('[AUTH] Failed to save session:', err.message)
+      return res.redirect("/login")
+    }
+    res.redirect("/user")
+  })
 });
 
 app.get("/auth", (req, res) => {
