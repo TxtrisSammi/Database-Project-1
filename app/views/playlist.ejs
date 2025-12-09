@@ -214,8 +214,8 @@
             }
 
             // Data from server
-            const tracks = <% - JSON.stringify(tracks) %>;
-            const genres = <% - JSON.stringify(genres) %>;
+            const tracks = <%- JSON.stringify(tracks) || '[]' %>;
+            const genres = <%- JSON.stringify(genres) || '[]' %>;
             const userId = '<%= userId %>';
 
             // Initialize filters
@@ -223,6 +223,66 @@
 
             // Initialize playlist creator
             initializePlaylistCreator(userId);
+
+            // Update stats based on current data
+            function updateStats() {
+              // Count genres
+              const genreCounts = {};
+              const artistCounts = {};
+
+              tracks.forEach(item => {
+                if (!item || !item.track) return;
+
+                // Count artists
+                item.track.artists.forEach(artist => {
+                  artistCounts[artist.name] = (artistCounts[artist.name] || 0) + 1;
+                });
+
+                // Count genres
+                const trackGenres = genres[item.track.id];
+                if (trackGenres) {
+                  trackGenres.split(',').forEach(genre => {
+                    const g = genre.trim();
+                    if (g) {
+                      genreCounts[g] = (genreCounts[g] || 0) + 1;
+                    }
+                  });
+                }
+              });
+
+              // Find top artist
+              let topArtist = 'No Data';
+              let maxArtistCount = 0;
+              Object.entries(artistCounts).forEach(([artist, count]) => {
+                if (count > maxArtistCount) {
+                  maxArtistCount = count;
+                  topArtist = artist;
+                }
+              });
+
+              // Find top genre
+              let topGenre = 'No Data';
+              let maxGenreCount = 0;
+              Object.entries(genreCounts).forEach(([genre, count]) => {
+                if (count > maxGenreCount) {
+                  maxGenreCount = count;
+                  topGenre = genre;
+                }
+              });
+
+              // Update DOM
+              const statsDiv = document.getElementById('stats');
+              if (statsDiv) {
+                const artistH3 = statsDiv.querySelector('li:first-child h3');
+                const genreH3 = statsDiv.querySelector('li:last-child h3');
+                
+                if (artistH3) artistH3.textContent = `Top Artist: ${topArtist}`;
+                if (genreH3) genreH3.textContent = `Top Genre: ${topGenre}`;
+              }
+            }
+
+            // Initial stats update
+            updateStats();
 
             // Genre editing functions
             function editGenres(event, trackId) {
@@ -357,6 +417,9 @@
                 } else {
                   genreTags.innerHTML = '<span class="no-genres">No genres</span>';
                 }
+
+                // Update stats
+                updateStats();
 
                 // Hide edit mode
                 cancelEdit(event, trackId);
