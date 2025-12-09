@@ -8,6 +8,8 @@
   <link rel="stylesheet" type="" href="/css/playlist.css">
   <link rel="stylesheet" type="" href="/css/loading.css">
   <script src="/js/pending-changes.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="/js/pie-chart.js"></script>
   <title>
     <%= playlist ? playlist.name : 'Playlist' %>
   </title>
@@ -71,9 +73,9 @@
                       </li>
                     </ul>
                   </div>
-                  <!-- <div class="chart-container" style="max-width: 400px; max-height: 400px; margin: auto;">
+                  <div class="chart-container" style="max-width: 400px; max-height: 400px; margin: auto;">
                     <canvas id="genrePieChart"></canvas>
-                  </div> -->
+                  </div>
                 </div>
 
                 <div class="window" id="tracks">
@@ -214,8 +216,8 @@
             }
 
             // Data from server
-            const tracks = <%- JSON.stringify(tracks) || '[]' %>;
-            const genres = <%- JSON.stringify(genres) || '[]' %>;
+            const tracks = <%- JSON.stringify(tracks) %>;
+            const genres = <%- JSON.stringify(genres) %>;
             const userId = '<%= userId %>';
 
             // Initialize filters
@@ -471,6 +473,10 @@
                 alert('Failed to remove track. Please try again.');
               }
             }
+
+            // Chart Drawing Logic
+            const genre_stats = <%- JSON.stringify(genre_stats) %>;             
+            drawGenrePieChart(genre_stats);
 
           </script>
 </body>
