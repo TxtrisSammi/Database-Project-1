@@ -205,6 +205,23 @@ async function createAll() {
     END;
   `;
 
+  const createGenreView = `
+    CREATE VIEW GenreView AS
+    SELECT 
+      TRIM(j.genre) AS SingleGenre,
+      COUNT(*) AS GenreCount
+    FROM 
+      TrackGenre,
+      JSON_TABLE(
+          CONCAT('["', REPLACE(ArtistGenre, ',', '","'), '"]'),
+          '$[*]' COLUMNS (genre VARCHAR(255) PATH '$')
+            ) AS j
+    WHERE ArtistGenre IS NOT NULL
+    GROUP BY SingleGenre
+    ORDER BY GenreCount DESC;
+  `
+
+
   const queries = [
     createUser,
     createTrack,
@@ -214,7 +231,8 @@ async function createAll() {
     createTrackArtist,
     createPlaylist,
     createPlaylistTrack,
-    createPendingChanges
+    createPendingChanges,
+    createGenreView
   ];
 
   for (const sql of queries) {
