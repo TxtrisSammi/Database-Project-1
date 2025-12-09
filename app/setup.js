@@ -26,7 +26,9 @@ const tables = [
   "ArtistGenre",
   "Track",
   "Artist",
-  "User"
+  "User", 
+  "GenreView",
+  "ArtistView"
 ];
 
 // main execution
@@ -221,6 +223,21 @@ async function createAll() {
     ORDER BY GenreCount DESC;
   `
 
+  const createArtistView = `
+    CREATE VIEW ArtistView AS
+    SELECT 
+    ArtistName,
+      COUNT(TrackArtist.ArtistId) AS ArtistCount
+    FROM 
+      TrackArtist JOIN Artist
+    WHERE 
+      Artist.ArtistId = TrackArtist.ArtistId
+    GROUP BY 
+      ArtistName
+    ORDER BY 
+      ArtistCount DESC;
+  `
+
 
   const queries = [
     createUser,
@@ -232,7 +249,8 @@ async function createAll() {
     createPlaylist,
     createPlaylistTrack,
     createPendingChanges,
-    createGenreView
+    createGenreView,
+    createArtistView
   ];
 
   for (const sql of queries) {
@@ -257,8 +275,13 @@ async function dropAll() {
 
     for (const table of tables) {
       try {
-        await query(`DROP TABLE IF EXISTS ${table}`);
-        console.log(`  - Dropped ${table}`);
+        if (table == 'GenreView' || table == 'ArtistView') {
+          await query(`DROP VIEW IF EXISTS ${table}`);
+          console.log(`  - Dropped ${table}`);
+        } else {
+          await query(`DROP TABLE IF EXISTS ${table}`);
+          console.log(`  - Dropped ${table}`);
+        }
       } catch (err) {
         console.warn(`  ⚠ Could not drop ${table}: ${err.message}`);
       }
