@@ -4,7 +4,7 @@ const { ensureValidToken } = require("../utils/tokenRefresh")
 const { addTracks } = require("../db/add-tracks")
 const { getLikedSongs: getLikedSongsFromDB } = require("../db/get-liked-songs")
 const { getTrackGenres } = require("../db/get-tracks")
-
+const { getTopGenre, getTopArtist, getGenreStats } = require("../db/get-playlist-stats")
 
 app.get("/liked-songs", async (req, res, next) => {
   console.log('[LIKED-SONGS] /liked-songs - Loading liked songs from database')
@@ -42,12 +42,40 @@ app.get("/liked-songs", async (req, res, next) => {
       genres = await getTrackGenres(trackIds)
     }
 
+    const likedSongsPlaylistId = req.session.userId + '_liked'
+
+    let top_genre = await getTopGenre(likedSongsPlaylistId)
+    let genre_stats = await getGenreStats(likedSongsPlaylistId)
+    let top_artist = await getTopArtist(likedSongsPlaylistId)
+
+    // PLAYLIST STATS
+    if (top_genre) {
+      top_genre = {
+        genre: top_genre.SingleGenre,
+        count: top_genre.GenreCount
+      }
+    } else {
+      top_genre = null;
+    }
+
+    if (top_artist) {
+      top_artist = {
+        artist: top_artist.ArtistName,
+        count: top_artist.ArtistCount
+      }
+    } else {
+      top_artist = null;
+    }
+
     console.log('[LIKED-SONGS] Rendering liked-songs page with DB data')
     console.log('[LIKED-SONGS] Tracks:', tracks.length)
     res.render("liked-songs.ejs", { 
       tracks: tracks, 
       genres: genres,
-      userId: req.session.userId || ''
+      userId: req.session.userId || '',
+      top_genre: top_genre, 
+      genre_stats: genre_stats, 
+      top_artist: top_artist 
     })
   } catch (error) {
     console.error('[LIKED-SONGS] Error in /liked-songs route:', error.message)
