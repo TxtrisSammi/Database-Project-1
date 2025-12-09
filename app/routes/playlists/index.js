@@ -6,12 +6,13 @@ const { addTracks } = require("../../db/add-tracks")
 const { getPlaylistTracks, getTrackGenres } = require("../../db/get-tracks")
 const { getPlaylists } = require("../../db/get-playlists")
 const newConnection = require('../../db/connection')
+const { getTopGenre, getTopArtist, getGenreStats } = require("../../db/get-playlist-stats")
 
-const { 
-  getPlaylistInfo, 
-  getTracks, 
-  fetchGenresForTracks, 
-  createPlaylistInSpotify 
+const {
+  getPlaylistInfo,
+  getTracks,
+  fetchGenresForTracks,
+  createPlaylistInSpotify
 } = require('../../utils/spotify-api')
 
 app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
@@ -34,6 +35,8 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
         owner: { display_name: 'You' }
       }
     }
+
+    
 
     // Load tracks from database
     let dbTracks = await getPlaylistTracks(id)
@@ -63,14 +66,41 @@ app.get("/playlists/:id", validatePlaylistId, async (req, res, next) => {
       genres = await getTrackGenres(trackIds)
     }
 
+    let top_genre = await getTopGenre(playlistData.PlaylistId)
+    let genre_stats = await getGenreStats(playlistData.PlaylistId)
+    let top_artist = await getTopArtist(playlistData.PlaylistId)
+
+    // PLAYLIST STATS
+    if (top_genre) {
+      top_genre = {
+        genre: top_genre.SingleGenre,
+        count: top_genre.GenreCount
+      }
+    } else {
+      top_genre = null;
+    }
+
+    if (top_artist) {
+      top_artist = {
+        artist: top_artist.ArtistName,
+        count: top_artist.ArtistCount
+      }
+    } else {
+      top_artist = null;
+    }
+
     console.log('[PLAYLIST] Rendering playlist page with DB data')
     console.log('[PLAYLIST] Playlist:', playlist ? playlist.name : 'No data')
     console.log('[PLAYLIST] Tracks:', tracks.length)
-    res.render("playlist.ejs", { 
-      playlist: playlist, 
-      tracks: tracks, 
+    res.render("playlist.ejs", {
+      playlist: playlist,
+      tracks: tracks,
       genres: genres,
-      userId: req.session.userId || ''
+      userId: req.session.userId || '',
+      top_genre: top_genre, 
+      genre_stats: genre_stats, 
+      top_artist: top_artist 
+
     })
 
   } catch (error) {
@@ -94,7 +124,7 @@ app.post("/playlists/:id/refresh", validatePlaylistId, async (req, res, next) =>
     // First, process pending changes
     console.log('[PLAYLIST] Checking for pending changes...')
     const result = await processPendingChanges(id, token)
-    
+
     // If playlist was created in Spotify, redirect to home so user can refresh
     if (result && result.redirectToHome) {
       console.log('[PLAYLIST] Playlist created in Spotify, redirecting to home')
@@ -141,15 +171,15 @@ async function processPendingChanges(playlistId, token) {
 
       // Check if we need to create the playlist in Spotify first
       const createPlaylistChange = results.find(c => c.ChangeType === 'CREATE_PLAYLIST')
-      
+
       if (createPlaylistChange) {
         try {
           console.log('[PLAYLIST] Creating playlist in Spotify for local playlist:', playlistId)
           const newSpotifyId = await createPlaylistInSpotify(playlistId, token, con)
-          
+
           if (newSpotifyId) {
             console.log('[PLAYLIST] Successfully created in Spotify with ID:', newSpotifyId)
-            
+
             // Delete the local playlist and pending change
             await new Promise((resolve2, reject2) => {
               con.query('DELETE FROM PendingChanges WHERE ChangeId = ?', [createPlaylistChange.ChangeId], (err2) => {
@@ -157,7 +187,7 @@ async function processPendingChanges(playlistId, token) {
                 else resolve2()
               })
             })
-            
+
             // Delete the local playlist
             await new Promise((resolve2, reject2) => {
               con.query('DELETE FROM Playlist WHERE PlaylistId = ?', [playlistId], (err2) => {
@@ -165,7 +195,7 @@ async function processPendingChanges(playlistId, token) {
                 else resolve2()
               })
             })
-            
+
             con.end()
             console.log('[PLAYLIST] Local playlist deleted, user should refresh to see Spotify version')
             resolve({ redirectToHome: true })
@@ -181,7 +211,7 @@ async function processPendingChanges(playlistId, token) {
 
       // Process track removals
       const trackRemovals = results.filter(c => c.ChangeType === 'REMOVE_TRACK')
-      
+
       for (const change of trackRemovals) {
         try {
           console.log('[PLAYLIST] Removing track', change.TrackId, 'from Spotify playlist')
