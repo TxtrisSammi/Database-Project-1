@@ -5,6 +5,7 @@ const { addUser } = require("../db/add-user")
 const { addPlaylists } = require("../db/add-playlists")
 const { getUser } = require("../db/get-user")
 const { getPlaylists } = require("../db/get-playlists")
+const { getTopGenre, getTopArtist, getGenreStats } = require("../db/get-stats")
 
 
 app.get("/user", async (req, res, next) => {
@@ -18,7 +19,12 @@ app.get("/user", async (req, res, next) => {
     // Load from database
     let user = await getUser(req.session.userId)
     let playlists = await getPlaylists(req.session.userId)
-    
+    let top_genre = await getTopGenre()
+    let genre_stats = await getGenreStats()
+    let top_artist = await getTopArtist()
+
+
+
     // Convert DB format to expected format
     if (user) {
       user = {
@@ -31,7 +37,7 @@ app.get("/user", async (req, res, next) => {
       // No user data in DB, set to null to trigger empty state
       user = null
     }
-    
+
     if (playlists && playlists.length > 0) {
       playlists = playlists.map(p => ({
         id: p.PlaylistId,
@@ -43,10 +49,28 @@ app.get("/user", async (req, res, next) => {
       playlists = []
     }
 
+    if (top_genre) {
+      top_genre = {
+        genre: top_genre.SingleGenre,
+        count: top_genre.GenreCount
+      }
+    } else {
+      top_genre = null;
+    }
+
+    if (top_artist) {
+      top_artist = {
+        artist: top_artist.ArtistName,
+        count: top_artist.ArtistCount
+      }
+    } else {
+      top_artist = null;
+    }
+
     console.log('[USER] Rendering user page with DB data')
     console.log('[USER] User:', user ? user.display_name : 'No data')
     console.log('[USER] Playlists:', playlists.length)
-    res.render("user.ejs", { user: user, playlists: playlists })
+    res.render("user.ejs", { user: user, playlists: playlists, top_genre: top_genre, genre_stats: genre_stats, top_artist: top_artist })
   } catch (error) {
     console.error('[USER] Error in /user route:', error.message)
     next(error)
@@ -70,14 +94,14 @@ app.post("/user/refresh", async (req, res, next) => {
     // console.log('[USER] Fetching user profile from Spotify API')
     let user = await getProfile(token)
     // console.log('[USER] User profile received:', user.display_name, '(ID:', user.id + ')')
-    
+
     // console.log('[USER] Fetching user playlists from Spotify API')
     let playlists = await getPlaylists_Spotify(token, user.id)
     // console.log('[USER] Received', playlists.length, 'playlists')
 
     // console.log('[USER] Updating user in database')
     await addUser(user)
-    
+
     // console.log('[USER] Updating playlists in database')
     addPlaylists(playlists, user.id)
 
@@ -168,7 +192,7 @@ async function processPendingPlaylistDeletions(token) {
   return new Promise((resolve, reject) => {
     // Get pending playlist deletions
     const query = "SELECT * FROM PendingChanges WHERE ChangeType = 'DELETE_PLAYLIST'"
-    
+
     con.query(query, async (err, results) => {
       if (err) {
         con.end()
@@ -190,7 +214,7 @@ async function processPendingPlaylistDeletions(token) {
       for (const change of results) {
         try {
           console.log('[USER] Deleting playlist', change.PlaylistId, 'from Spotify')
-          
+
           // Make Spotify API call to unfollow (delete) playlist
           const response = await fetch(`https://api.spotify.com/v1/playlists/${change.PlaylistId}/followers`, {
             method: 'DELETE',
@@ -202,7 +226,7 @@ async function processPendingPlaylistDeletions(token) {
           if (response.ok || response.status === 404) {
             // 404 means already deleted, which is fine
             console.log('[USER] Successfully deleted playlist from Spotify')
-            
+
             // Delete the pending change record
             await new Promise((resolve2, reject2) => {
               con.query('DELETE FROM PendingChanges WHERE ChangeId = ?', [change.ChangeId], (err2) => {
